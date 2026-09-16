@@ -144,6 +144,18 @@ class _OfficeSceneState extends State<OfficeScene>
   @override
   Widget build(BuildContext context) {
     final progress = widget.previewMoment != null ? .5 : _director.progress;
+    final tense =
+        moment == OfficeMoment.deadline || moment == OfficeMoment.feedback;
+    final accent = tense
+        ? coral
+        : moment == OfficeMoment.approved
+        ? gold
+        : navy;
+    final captionColor = tense
+        ? const Color(0xffffeded)
+        : moment == OfficeMoment.approved
+        ? const Color(0xffffefb6)
+        : paper;
     final content = ClipRect(
       child: Semantics(
         label: '레벨 ${widget.level} 사무실, ${moment.title}',
@@ -152,7 +164,7 @@ class _OfficeSceneState extends State<OfficeScene>
           children: [
             if (_rooms == null || _sprites == null || _moments == null)
               ColoredBox(
-                color: const Color(0xffd8dfc4),
+                color: const Color(0xffdce3ef),
                 child: Center(
                   child: Text(
                     _error == null ? '사무실 준비 중…' : '사무실 이미지를 불러오지 못했어요.',
@@ -190,9 +202,9 @@ class _OfficeSceneState extends State<OfficeScene>
                   ),
                   decoration: BoxDecoration(
                     color: paper.withValues(alpha: .97),
-                    border: Border.all(color: border, width: 2),
+                    border: Border.all(color: accent, width: 2),
                     boxShadow: const [
-                      BoxShadow(color: Color(0x30405030), offset: Offset(2, 2)),
+                      BoxShadow(color: Color(0x30202c40), offset: Offset(2, 2)),
                     ],
                   ),
                   child: Text(
@@ -215,13 +227,13 @@ class _OfficeSceneState extends State<OfficeScene>
               child: Container(
                 height: 27,
                 padding: const EdgeInsets.symmetric(horizontal: 9),
-                color: paper.withValues(alpha: .94),
+                color: captionColor.withValues(alpha: .97),
                 alignment: Alignment.centerLeft,
                 child: Text(
                   '●  ${moment.title}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11, color: green),
+                  style: TextStyle(fontSize: 11, color: tense ? coral : navy),
                 ),
               ),
             ),

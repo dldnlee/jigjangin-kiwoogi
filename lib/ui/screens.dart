@@ -13,8 +13,8 @@ extension _Screens on _GameScreenState {
           children: [
             Container(
               padding: const EdgeInsets.all(7),
-              color: const Color(0xffe7ecd7),
-              child: PixelIcon(key, size: 22, color: green),
+              color: const Color(0xffe4eaf4),
+              child: PixelIcon(key, size: 22, color: navy),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -67,7 +67,7 @@ extension _Screens on _GameScreenState {
                       height: 30,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: i <= s.rank ? green : const Color(0xffe5e7d3),
+                        color: i <= s.rank ? navy : const Color(0xffe1e5ed),
                         border: Border.all(color: border),
                       ),
                       child: Text(
@@ -79,7 +79,7 @@ extension _Screens on _GameScreenState {
                     Expanded(
                       child: Text(
                         content.ranks[i]['name'],
-                        style: TextStyle(color: i == s.rank ? green : ink),
+                        style: TextStyle(color: i == s.rank ? navy : ink),
                       ),
                     ),
                     Text(
@@ -99,7 +99,7 @@ extension _Screens on _GameScreenState {
       const SizedBox(height: 18),
       if (s.rank < 4)
         PixelPanel(
-          color: const Color(0xffeef1df),
+          color: const Color(0xffe8edf6),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -115,7 +115,7 @@ extension _Screens on _GameScreenState {
                     Text(r.label, style: const TextStyle(fontSize: 14)),
                     Text(
                       '${r.current} / ${r.target} ${r.met ? '✓' : ''}',
-                      style: const TextStyle(fontSize: 13, color: green),
+                      style: const TextStyle(fontSize: 13, color: navy),
                     ),
                   ],
                 ),
@@ -125,7 +125,7 @@ extension _Screens on _GameScreenState {
               ],
               Text(
                 '승진 가능성 ${engine.chance(s) ~/ 100}%',
-                style: const TextStyle(fontSize: 19, color: green),
+                style: const TextStyle(fontSize: 19, color: navy),
               ),
               const SizedBox(height: 6),
               Text(
@@ -182,7 +182,7 @@ extension _Screens on _GameScreenState {
           children: [
             Row(
               children: [
-                const PixelIcon('office', size: 28, color: green),
+                const PixelIcon('office', size: 28, color: navy),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(c['name'], style: const TextStyle(fontSize: 19)),
@@ -190,7 +190,7 @@ extension _Screens on _GameScreenState {
                 if (s.companyId == c['id'])
                   const Text(
                     '근무 중',
-                    style: TextStyle(fontSize: 12, color: green),
+                    style: TextStyle(fontSize: 12, color: navy),
                   ),
               ],
             ),
@@ -253,7 +253,7 @@ extension _Screens on _GameScreenState {
                     PixelIcon(
                       k['id'] == 'talk' ? 'chat' : 'skills',
                       size: 30,
-                      color: green,
+                      color: navy,
                     ),
                     const SizedBox(width: 13),
                     Expanded(
@@ -264,7 +264,7 @@ extension _Screens on _GameScreenState {
                     ),
                     Text(
                       'LV.${s.skills[k['id']]}',
-                      style: const TextStyle(fontSize: 20, color: green),
+                      style: const TextStyle(fontSize: 20, color: navy),
                     ),
                   ],
                 ),
@@ -280,7 +280,7 @@ extension _Screens on _GameScreenState {
                 const SizedBox(height: 10),
                 Text(
                   '장비 포함 ${engine.skill(s, k['id'])} 레벨',
-                  style: const TextStyle(fontSize: 13, color: green),
+                  style: const TextStyle(fontSize: 13, color: navy),
                 ),
                 const SizedBox(height: 16),
                 PixelButton(
@@ -306,13 +306,13 @@ extension _Screens on _GameScreenState {
     children: [
       _title('MY INVENTORY', '일잘러의 준비물.', '구매 후 바로 장착! 슬롯마다 하나씩.'),
       PixelPanel(
-        color: const Color(0xffe7ecd8),
+        color: const Color(0xffe4eaf4),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               '${s.inventory.length}/15 보유 · ${won(s.cash)}',
-              style: const TextStyle(fontSize: 16, color: green),
+              style: const TextStyle(fontSize: 16, color: navy),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -340,7 +340,7 @@ extension _Screens on _GameScreenState {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            PixelIcon(slot.key, size: 22, color: green),
+                            PixelIcon(slot.key, size: 22, color: navy),
                             const SizedBox(height: 7),
                             Text(
                               slot.value,
@@ -396,8 +396,8 @@ extension _Screens on _GameScreenState {
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
-                  color: const Color(0xffe7ecd6),
-                  child: PixelIcon(g['slot'], size: 30, color: green),
+                  color: const Color(0xffe4eaf4),
+                  child: PixelIcon(g['slot'], size: 30, color: navy),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -424,7 +424,7 @@ extension _Screens on _GameScreenState {
                       )
                       .join(' · ') +
                   (g['income'] > 0 ? ' · 급여 +2%p' : ''),
-              style: const TextStyle(fontSize: 13, color: green),
+              style: const TextStyle(fontSize: 13, color: navy),
             ),
             const SizedBox(height: 14),
             PixelButton(
@@ -478,7 +478,7 @@ extension _Screens on _GameScreenState {
         const PixelPanel(
           child: Column(
             children: [
-              PixelIcon('journal', size: 40, color: green),
+              PixelIcon('journal', size: 40, color: navy),
               SizedBox(height: 20),
               Text('아직 첫 페이지예요.'),
               SizedBox(height: 8),

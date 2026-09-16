@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
-const ink = Color(0xff3e4c3c),
-    green = Color(0xff536f4c),
-    paper = Color(0xfffffbeb),
-    gold = Color(0xffecd595);
-const muted = Color(0xff778169), border = Color(0xff839077);
+const ink = Color(0xff202c40),
+    navy = Color(0xff293e63),
+    paper = Color(0xfffafbff),
+    gold = Color(0xffffd35a);
+const muted = Color(0xff626f83), border = Color(0xff8592a6);
+const coral = Color(0xffc64b47);
 
 class PixelPanel extends StatelessWidget {
   const PixelPanel({
@@ -24,7 +25,7 @@ class PixelPanel extends StatelessWidget {
       color: color,
       border: Border.all(color: border, width: 2),
       boxShadow: const [
-        BoxShadow(color: Color(0xffbec1a5), offset: Offset(3, 4)),
+        BoxShadow(color: Color(0xffc0c9d8), offset: Offset(3, 4)),
       ],
     ),
     child: child,
@@ -50,10 +51,10 @@ class PixelButton extends StatelessWidget {
       constraints: const BoxConstraints(minHeight: 48),
       child: Material(
         color: onPressed == null
-            ? const Color(0xffe4e6d3)
+            ? const Color(0xffe1e5ed)
             : primary
-            ? green
-            : const Color(0xfff0e5be),
+            ? navy
+            : const Color(0xffffdf78),
         shape: Border.all(color: onPressed == null ? border : ink, width: 2),
         child: InkWell(
           onTap: onPressed,
@@ -90,14 +91,14 @@ class PixelMeter extends StatelessWidget {
     height: 10,
     padding: const EdgeInsets.all(2),
     decoration: BoxDecoration(
-      color: const Color(0xffe5e5ce),
+      color: const Color(0xffe1e7f1),
       border: Border.all(color: border),
     ),
     child: Align(
       alignment: Alignment.centerLeft,
       child: FractionallySizedBox(
         widthFactor: value.clamp(0, 1),
-        child: const ColoredBox(color: green),
+        child: const ColoredBox(color: navy),
       ),
     ),
   );

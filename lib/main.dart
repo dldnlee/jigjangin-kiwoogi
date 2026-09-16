@@ -21,9 +21,9 @@ Future<void> main() async {
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: Color(0xfff2eedb),
+      statusBarColor: Color(0xff293e63),
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Color(0xfff5f7fb),
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
@@ -43,17 +43,24 @@ class OfficeWorkerApp extends StatelessWidget {
     theme: ThemeData(
       useMaterial3: true,
       fontFamily: 'NeoDunggeunmo',
-      scaffoldBackgroundColor: const Color(0xfff7f0dc),
-      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xff48684a)),
+      scaffoldBackgroundColor: const Color(0xffedf0f5),
+      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xff293e63))
+          .copyWith(
+            primary: const Color(0xff293e63),
+            secondary: const Color(0xffffd35a),
+            surface: const Color(0xfffafbff),
+            onSurface: const Color(0xff202c40),
+            error: const Color(0xffc64b47),
+          ),
       textTheme: const TextTheme(
         bodyMedium: TextStyle(
           fontSize: 16,
           height: 1.4,
-          color: Color(0xff38463a),
+          color: Color(0xff202c40),
         ),
       ),
       snackBarTheme: const SnackBarThemeData(
-        backgroundColor: Color(0xff384c3b),
+        backgroundColor: Color(0xff293e63),
         behavior: SnackBarBehavior.floating,
       ),
     ),

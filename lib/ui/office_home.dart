@@ -10,12 +10,12 @@ extension _OfficeHome on _GameScreenState {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: const Color(0xfffff4cf),
+            color: const Color(0xfffafbff),
             border: Border.all(color: border, width: 2),
           ),
           child: Row(
             children: [
-              const PixelIcon('coin', size: 28, color: Color(0xffa98538)),
+              const PixelIcon('coin', size: 28, color: Color(0xffb57b12)),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -49,7 +49,7 @@ extension _OfficeHome on _GameScreenState {
                   ),
                   Text(
                     '+${won(engine.rate(s))}/초',
-                    style: const TextStyle(fontSize: 12, color: green),
+                    style: const TextStyle(fontSize: 12, color: navy),
                   ),
                 ],
               ),
@@ -62,7 +62,7 @@ extension _OfficeHome on _GameScreenState {
             children: [
               Text(
                 'LV.${s.level}',
-                style: const TextStyle(fontSize: 12, color: green),
+                style: const TextStyle(fontSize: 12, color: navy),
               ),
               const SizedBox(width: 8),
               Expanded(child: PixelMeter(s.xp / s.xpNeeded)),
@@ -177,7 +177,7 @@ extension _OfficeHome on _GameScreenState {
               const SizedBox(height: 8),
               Text(
                 '보유 ${won(s.cash)} · 초당 ${won(engine.rate(s))}',
-                style: const TextStyle(fontSize: 13, color: green),
+                style: const TextStyle(fontSize: 13, color: navy),
               ),
               const SizedBox(height: 16),
               for (final upgrade in content.upgrades) _upgrade(upgrade),

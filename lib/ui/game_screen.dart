@@ -63,27 +63,27 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     }
     if (s.offline == null) _awayShown = false;
     return ColoredBox(
-      color: const Color(0xffc6cdb8),
+      color: const Color(0xffcbd2df),
       child: Center(
         child: SizedBox(
           width: 480,
           child: Scaffold(
             appBar: AppBar(
-              backgroundColor: const Color(0xfff2eedb),
+              backgroundColor: navy,
               surfaceTintColor: Colors.transparent,
               title: const Text(
                 '직장인 키우기',
-                style: TextStyle(fontSize: 22, color: ink),
+                style: TextStyle(fontSize: 22, color: paper),
               ),
               leading: const Padding(
                 padding: EdgeInsets.all(16),
-                child: PixelIcon('office', size: 24, color: green),
+                child: PixelIcon('office', size: 24, color: paper),
               ),
               actions: [
                 IconButton(
                   tooltip: '설정',
                   onPressed: _settings,
-                  icon: const PixelIcon('settings', size: 22),
+                  icon: const PixelIcon('settings', size: 22, color: paper),
                 ),
                 const SizedBox(width: 6),
               ],
@@ -151,7 +151,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const PixelIcon('office', size: 56, color: green),
+              const PixelIcon('office', size: 56, color: navy),
               const SizedBox(height: 24),
               Text(
                 c.error == null ? '출근 준비 중...' : '저장을 확인해 주세요',
@@ -180,7 +180,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   );
   Widget _navigation() => Container(
     decoration: const BoxDecoration(
-      color: Color(0xfff2eedb),
+      color: Color(0xfff5f7fb),
       border: Border(top: BorderSide(color: border, width: 2)),
     ),
     child: SafeArea(
@@ -205,7 +205,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     constraints: const BoxConstraints(minHeight: 70),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     color: widget.page == pair.$1
-                        ? const Color(0xffdce6cb)
+                        ? const Color(0xffdce6f7)
                         : null,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -213,14 +213,14 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                         PixelIcon(
                           pair.$1,
                           size: 24,
-                          color: widget.page == pair.$1 ? green : muted,
+                          color: widget.page == pair.$1 ? navy : muted,
                         ),
                         const SizedBox(height: 7),
                         Text(
                           pair.$2,
                           style: TextStyle(
                             fontSize: 12,
-                            color: widget.page == pair.$1 ? green : muted,
+                            color: widget.page == pair.$1 ? navy : muted,
                           ),
                         ),
                       ],
@@ -287,7 +287,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const PixelIcon('chat', size: 36, color: green),
+          const PixelIcon('chat', size: 36, color: navy),
           const SizedBox(height: 17),
           Text(event['title'], style: const TextStyle(fontSize: 24)),
           const SizedBox(height: 16),
@@ -336,7 +336,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const PixelIcon('coin', size: 40, color: green),
+          const PixelIcon('coin', size: 40, color: navy),
           const SizedBox(height: 20),
           const Text('자리를 비운 동안', style: TextStyle(fontSize: 26)),
           const SizedBox(height: 15),
@@ -344,7 +344,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           const SizedBox(height: 24),
           Text(
             '+${won(BigInt.parse(receipt['cash']))}',
-            style: const TextStyle(fontSize: 34, color: green),
+            style: const TextStyle(fontSize: 34, color: navy),
           ),
           const SizedBox(height: 18),
           Text(
@@ -459,7 +459,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 },
                 child: const Text(
                   '새로 시작하기',
-                  style: TextStyle(color: Color(0xffa15d42)),
+                  style: TextStyle(color: Color(0xffbd413e)),
                 ),
               ),
               const Text(

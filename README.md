@@ -28,6 +28,8 @@ For iOS, open the project on macOS with Xcode and run `flutter run` against an i
 
 ## Pixel artwork
 
+The interface uses office navy, cool gray and fluorescent white, with yellow reward accents and coral stress/feedback captions. This gives the pixel-art workplace a sharper office-comedy tone.
+
 The main office screen fits the phone without scrolling. The office and character stay in place; upgrades open in a bottom sheet. A compact action bar opens new office events or the next promotion.
 
 Ambient animations play at random: deadline stress, a happy approval, report feedback from a senior colleague, coffee breaks, and meeting preparation. Korean workplace dialogue accompanies each scene. Visitors walk in and out; these scenes are cosmetic and never change your earnings or promotion odds.
