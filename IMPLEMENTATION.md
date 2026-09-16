@@ -4,6 +4,10 @@ Updated 2026-09-16. Flutter 3.47.4 / Dart 3.13.3.
 
 ## Delivered
 
+- Fixed, non-scrolling office home. Wallet/XP, office viewport and action buttons fit 320 × 568 and 390 × 844 phones. The upgrade list is a live bottom sheet; swiping and sheet dismissal do not move the office.
+- Six ambient states including working, deadline stress, approval, feedback, coffee and meetings. Five vignette types use a shuffled random bag, work intervals, two-beat Korean dialogue, sprite expressions and visitor entrance/exit. The cosmetic director never touches gameplay RNG. Reduced motion, TickerMode and app lifecycle pause it.
+- A new 16-frame expression/colleague atlas, original source, user-approved local alpha cleanup script, and six scene screenshots.
+
 - Portrait Flutter app with five routes: office, career, skills, equipment, journal.
 - Riverpod controller publishes committed actions, ticks elapsed income, saves every five seconds, and handles background/resume settlement.
 - Dart simulation uses BigInt money, floor-ordered salary multipliers, exact geometric costs, independent seeded random streams, pity promotions, cooldowns, offers, and choice events.
@@ -16,6 +20,8 @@ Updated 2026-09-16. Flutter 3.47.4 / Dart 3.13.3.
 Automated domain and SQLite tests cover initial salary and leveling, integer tick accumulation, simulation segmentation, eight-hour offline cap, backward clock handling, atomic/replayed purchases, checksum tampering, room tier selection, stale SQLite writes, and recovery from a broken current snapshot.
 
 Widget coverage visits all five routes at 320 and 390 logical pixels. Four mobile screenshots cover the starter room and levels 6, 11, 16. The real preview was checked for Korean font rendering, artwork transparency, upgrade controls and persistence.
+
+Additional coverage checks absence of any scrollable on the home screen, unchanged scene bounds after swipes and upgrade-sheet interactions, complete/no-repeat vignette scheduling, time segmentation, real sprite transparency, preserved white clothing, and animation pause behavior.
 
 ## Boundaries
 

@@ -2,9 +2,12 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
-/// Four room shells plus deterministic per-level furnishings and daylight.
+import 'office_moments.dart';
+import 'pixel_widgets.dart';
+
 int roomForLevel(int level, int rank) =>
     math.max(rank, (level - 1) ~/ 5).clamp(0, 3);
 
@@ -14,24 +17,34 @@ class OfficeScene extends StatefulWidget {
     required this.level,
     required this.rank,
     required this.reducedMotion,
+    this.fillSpace = false,
+    this.previewMoment,
+    this.previewFrame = 0,
   });
   final int level, rank;
-  final bool reducedMotion;
+  final bool reducedMotion, fillSpace;
+
+  /// Static art-direction/test preview; gameplay always uses the random director.
+  final OfficeMoment? previewMoment;
+  final int previewFrame;
   @override
   State<OfficeScene> createState() => _OfficeSceneState();
 }
 
 class _OfficeSceneState extends State<OfficeScene>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _clock = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1200),
-  );
-  ui.Image? _rooms, _sprites;
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+  final _director = OfficeDirector();
+  late final Ticker _ticker = createTicker(_tick);
+  Duration _previous = Duration.zero;
+  int _paintMs = 0, _animationMs = 0;
+  bool _active = true;
+  ui.Image? _rooms, _sprites, _moments;
   Object? _error;
+  OfficeMoment get moment => widget.previewMoment ?? _director.moment;
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _load();
   }
 
@@ -40,41 +53,63 @@ class _OfficeSceneState extends State<OfficeScene>
     final codec = await ui.instantiateImageCodec(
       bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
     );
-    final frame = await codec.getNextFrame();
+    final image = (await codec.getNextFrame()).image;
     codec.dispose();
-    return frame.image;
+    return image;
   }
 
   Future<void> _load() async {
+    final loaded = <ui.Image>[];
     try {
-      final images = await Future.wait([
-        _image('assets/sprites/office-rooms.png'),
-        _image('assets/sprites/office-sprites.png'),
-      ]);
+      for (final name in ['office-rooms', 'office-sprites', 'office-moments']) {
+        loaded.add(await _image('assets/sprites/$name.png'));
+      }
       if (!mounted) {
-        for (final image in images) {
+        for (final image in loaded) {
           image.dispose();
         }
         return;
       }
       setState(() {
-        _rooms = images[0];
-        _sprites = images[1];
+        _rooms = loaded[0];
+        _sprites = loaded[1];
+        _moments = loaded[2];
       });
     } catch (e) {
+      for (final image in loaded) {
+        image.dispose();
+      }
       if (mounted) {
         setState(() => _error = e);
       }
     }
   }
 
+  void _tick(Duration elapsed) {
+    final delta = (elapsed - _previous).inMilliseconds.clamp(0, 250);
+    _previous = elapsed;
+    _director.advance(delta);
+    _animationMs += delta;
+    _paintMs += delta;
+    if (_paintMs >= 150) {
+      _paintMs = 0;
+      setState(() {});
+    }
+  }
+
   void _motion() {
     final stop =
-        widget.reducedMotion || MediaQuery.disableAnimationsOf(context);
+        widget.reducedMotion ||
+        widget.previewMoment != null ||
+        MediaQuery.disableAnimationsOf(context) ||
+        !TickerMode.valuesOf(context).enabled ||
+        !_active;
     if (stop) {
-      _clock.stop();
-    } else if (!_clock.isAnimating) {
-      _clock.repeat();
+      _ticker.stop();
+      _previous = Duration.zero;
+    } else if (!_ticker.isActive) {
+      _previous = Duration.zero;
+      _ticker.start();
     }
   }
 
@@ -91,22 +126,32 @@ class _OfficeSceneState extends State<OfficeScene>
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _active = state == AppLifecycleState.resumed;
+    _motion();
+  }
+
+  @override
   void dispose() {
-    _clock.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    _ticker.dispose();
     _rooms?.dispose();
     _sprites?.dispose();
+    _moments?.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) => Semantics(
-    label:
-        '레벨 ${widget.level} 사무실, ${['작은 사무실', '열린 사무실', '팀장 사무실', '전망 좋은 사무실'][roomForLevel(widget.level, widget.rank)]}',
-    child: AspectRatio(
-      aspectRatio: 1.5,
-      child: RepaintBoundary(
-        child: _rooms == null || _sprites == null
-            ? ColoredBox(
+  Widget build(BuildContext context) {
+    final progress = widget.previewMoment != null ? .5 : _director.progress;
+    final content = ClipRect(
+      child: Semantics(
+        label: '레벨 ${widget.level} 사무실, ${moment.title}',
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (_rooms == null || _sprites == null || _moments == null)
+              ColoredBox(
                 color: const Color(0xffd8dfc4),
                 child: Center(
                   child: Text(
@@ -114,45 +159,112 @@ class _OfficeSceneState extends State<OfficeScene>
                   ),
                 ),
               )
-            : AnimatedBuilder(
-                animation: _clock,
-                builder: (_, _) => CustomPaint(
+            else
+              RepaintBoundary(
+                child: CustomPaint(
                   painter: _OfficePainter(
                     _rooms!,
                     _sprites!,
+                    _moments!,
                     widget.level,
                     widget.rank,
-                    (_clock.value * 4).floor().clamp(0, 3),
+                    widget.previewMoment == null
+                        ? (_animationMs ~/ 300) % 4
+                        : widget.previewFrame.clamp(0, 3),
+                    moment,
+                    progress,
                   ),
                 ),
               ),
+            Positioned(
+              top: 10,
+              left: 10,
+              right: 10,
+              child: Align(
+                alignment: Alignment.topRight,
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 290),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: paper.withValues(alpha: .97),
+                    border: Border.all(color: border, width: 2),
+                    boxShadow: const [
+                      BoxShadow(color: Color(0x30405030), offset: Offset(2, 2)),
+                    ],
+                  ),
+                  child: Text(
+                    moment.dialogue(progress < .5 ? 0 : 1, widget.rank),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      height: 1.35,
+                      color: ink,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: 27,
+                padding: const EdgeInsets.symmetric(horizontal: 9),
+                color: paper.withValues(alpha: .94),
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '●  ${moment.title}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 11, color: green),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+    return widget.fillSpace
+        ? content
+        : AspectRatio(aspectRatio: 1.5, child: content);
+  }
 }
 
 class _OfficePainter extends CustomPainter {
-  _OfficePainter(this.rooms, this.sprites, this.level, this.rank, this.frame);
-  final ui.Image rooms, sprites;
+  _OfficePainter(
+    this.rooms,
+    this.sprites,
+    this.moments,
+    this.level,
+    this.rank,
+    this.frame,
+    this.moment,
+    this.progress,
+  );
+  final ui.Image rooms, sprites, moments;
   final int level, rank, frame;
+  final OfficeMoment moment;
+  final double progress;
   @override
   void paint(Canvas canvas, Size size) {
     final tier = roomForLevel(level, rank);
     final paint = Paint()
       ..filterQuality = FilterQuality.none
       ..isAntiAlias = false;
-    canvas.drawImageRect(
-      rooms,
-      Rect.fromLTWH(
-        (tier % 2) * rooms.width / 2,
-        (tier ~/ 2) * rooms.height / 2,
-        rooms.width / 2,
-        rooms.height / 2,
-      ),
-      Offset.zero & size,
-      paint,
+    final room = Rect.fromLTWH(
+      (tier % 2) * rooms.width / 2,
+      (tier ~/ 2) * rooms.height / 2,
+      rooms.width / 2,
+      rooms.height / 2,
     );
-    // Each numerical level changes the daylight and prop positions; major tiers replace the room.
+    final fitted = applyBoxFit(BoxFit.cover, room.size, size);
+    final crop = Alignment.center.inscribe(fitted.source, room);
+    canvas.drawImageRect(rooms, crop, Offset.zero & size, paint);
     canvas.drawRect(
       Offset.zero & size,
       Paint()
@@ -164,9 +276,40 @@ class _OfficePainter extends CustomPainter {
           const Color(0x0bbaa1d1),
         ][(level - 1) % 5],
     );
-    void sprite(int cell, double x, double y, double w) {
-      // The generated atlas uses unequal furniture bounds. Explicit UVs prevent
-      // neighbouring props and feet from bleeding into animation frames.
+    // Keep a consistent floor baseline at every device height. Sprite sizes depend
+    // on width but shrink on short phones, leaving the dialogue unobstructed.
+    final unit = math.min(size.width, (size.height - 50) * 1.5);
+    final left = (size.width - unit) / 2;
+    final floor = size.height - 34;
+    void draw(
+      ui.Image atlas,
+      Rect uv,
+      double x,
+      double bottom,
+      double w, {
+      double dx = 0,
+      double dy = 0,
+    }) {
+      final dest = Rect.fromLTWH(
+        (left + x * unit + dx).roundToDouble(),
+        (floor - bottom * unit - w * unit + dy).roundToDouble(),
+        (w * unit).roundToDouble(),
+        (w * unit).roundToDouble(),
+      );
+      canvas.drawImageRect(
+        atlas,
+        Rect.fromLTWH(
+          uv.left * atlas.width,
+          uv.top * atlas.height,
+          uv.width * atlas.width,
+          uv.height * atlas.height,
+        ),
+        dest,
+        paint,
+      );
+    }
+
+    void prop(int cell, double x, double bottom, double w) {
       final Rect uv;
       if (cell < 8) {
         uv = Rect.fromLTWH(
@@ -182,49 +325,106 @@ class _OfficePainter extends CustomPainter {
       } else {
         uv = Rect.fromLTWH((cell % 4) * .25, .775, .25, .225);
       }
-      canvas.drawImageRect(
-        sprites,
+      draw(sprites, uv, x, bottom, w);
+    }
+
+    void actor(
+      int row,
+      double x,
+      double bottom,
+      double w, {
+      double dx = 0,
+      double dy = 0,
+    }) => draw(
+      moments,
+      Rect.fromLTWH(frame * .25, row * .25, .25, .25),
+      x,
+      bottom,
+      w,
+      dx: dx,
+      dy: dy,
+    );
+    final shift = ((level - 1) % 5) * .02 + (level - 1) * .0005;
+    prop(11, .01, .13, .24);
+    prop(10, .77 - shift, .09, .22);
+    if (level >= 2) {
+      prop(13, .02 + shift, .03, .18);
+    }
+    if (level >= 5) {
+      prop(15, .07, .33, .10);
+    }
+    final interacting =
+        moment == OfficeMoment.feedback || moment == OfficeMoment.meeting;
+    // Walk-in / walk-out translation, then gesture animation beside the desk.
+    if (interacting) {
+      final entrance = (progress / .18).clamp(0.0, 1.0);
+      final exit = ((progress - .83) / .17).clamp(0.0, 1.0);
+      final travel = (1 - entrance + exit) * unit * .42;
+      actor(
+        3,
+        .66,
+        .07,
+        .31,
+        dx: travel,
+        dy: travel > 0 ? (frame % 2) * 2.0 : 0,
+      );
+    }
+    switch (moment) {
+      case OfficeMoment.deadline:
+        actor(0, .26, .06, .39, dx: frame.isEven ? -1 : 1);
+      case OfficeMoment.approved:
+        actor(1, .26, .06, .39, dy: frame == 1 || frame == 2 ? -4 : 0);
+      case OfficeMoment.feedback:
+        actor(2, .26, .06, .39);
+      case OfficeMoment.meeting:
+        actor(2, .26, .06, .39);
+      case OfficeMoment.coffee:
+      case OfficeMoment.working:
+        prop((rank >= 2 ? 4 : 0) + frame, .26, .06, .39);
+    }
+    prop(8, .38, .00, .37);
+    prop(14, .12 + shift, -.01, .16);
+    // Pixel effects are independent overlays, never baked into the room.
+    void pixel(double x, double y, double w, double h, Color color) {
+      canvas.drawRect(
         Rect.fromLTWH(
-          uv.left * sprites.width,
-          uv.top * sprites.height,
-          uv.width * sprites.width,
-          uv.height * sprites.height,
+          (left + x * unit).roundToDouble(),
+          (floor - y * unit).roundToDouble(),
+          w * unit,
+          h * unit,
         ),
-        Rect.fromLTWH(
-          (x * size.width).roundToDouble(),
-          (y * size.height).roundToDouble(),
-          (w * size.width).roundToDouble(),
-          (w * size.width).roundToDouble(),
-        ),
-        paint,
+        Paint()..color = color,
       );
     }
 
-    final shift = ((level - 1) % 5) * .022 + (level - 1) * .0005;
-    sprite(11, .02, .39, .24); // bookcase
-    sprite(10, .76 - shift, .46, .21); // plant
-    if (level >= 2) {
-      sprite(13, .01 + shift, .49, .20);
+    if (moment == OfficeMoment.deadline) {
+      pixel(.44, .35 + (frame % 2) * .007, .008, .018, const Color(0xff69a9c6));
+      for (var i = 0; i < 3; i++) {
+        pixel(.66, .15 + i * .01, .07, .008, paper);
+      }
     }
-    if (level >= 3) {
-      sprite(12, .71, .62, .18);
+    if (moment == OfficeMoment.approved) {
+      for (var i = 0; i < 3; i++) {
+        final x = .28 + i * .13, y = .38 + (frame % 2) * .015;
+        pixel(x, y, .025, .007, gold);
+        pixel(x + .009, y + .008, .007, .025, gold);
+      }
     }
-    // Character sits behind the independent desk layer.
-    sprite((rank >= 2 ? 4 : 0) + frame, .30, .34, .36);
-    sprite(8, .38, .43, .35);
-    sprite(14, .10 + shift, .76, .17);
-    if (level >= 5) {
-      sprite(15, .07, .29, .10);
+    if (moment == OfficeMoment.coffee) {
+      final lift = frame == 1 || frame == 2 ? .055 : 0;
+      pixel(.475, .20 + lift, .034, .053, const Color(0xffa76f49));
+      pixel(.472, .205 + lift, .04, .007, const Color(0xfff1e5c5));
+      pixel(.495, .23 + lift, .005, .035, const Color(0xff577566));
     }
   }
 
   @override
   bool shouldRepaint(covariant _OfficePainter old) =>
       old.frame != frame ||
+      old.moment != moment ||
+      old.progress != progress ||
       old.level != level ||
       old.rank != rank ||
       old.rooms != rooms ||
-      old.sprites != sprites;
+      old.moments != moments;
 }
-
-

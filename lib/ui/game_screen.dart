@@ -10,6 +10,7 @@ import '../domain/game.dart';
 import 'pixel_widgets.dart';
 import 'office_scene.dart';
 part 'screens.dart';
+part 'office_home.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
   const GameScreen({required this.page, super.key});
@@ -21,13 +22,6 @@ class GameScreen extends ConsumerStatefulWidget {
 class _GameScreenState extends ConsumerState<GameScreen> {
   bool _awayShown = false;
   String _gearFilter = 'all';
-  String _speech = '오늘도 나의 속도로!';
-  void _encourage() {
-    setState(
-      () =>
-          _speech = _speech == '오늘도 나의 속도로!' ? '작은 성취도, 성취니까.' : '오늘도 나의 속도로!',
-    );
-  }
 
   void _filter(String value) {
     setState(() => _gearFilter = value);
@@ -125,17 +119,19 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                       ),
                     ),
                   Expanded(
-                    child: SingleChildScrollView(
-                      key: PageStorageKey(widget.page),
-                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-                      child: switch (widget.page) {
-                        'career' => _career(),
-                        'skills' => _skills(),
-                        'equipment' => _equipment(),
-                        'journal' => _journal(),
-                        _ => _office(),
-                      },
-                    ),
+                    child: widget.page == 'office'
+                        ? _office()
+                        : SingleChildScrollView(
+                            key: PageStorageKey(widget.page),
+                            padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+                            child: switch (widget.page) {
+                              'career' => _career(),
+                              'skills' => _skills(),
+                              'equipment' => _equipment(),
+                              'journal' => _journal(),
+                              _ => _journal(),
+                            },
+                          ),
                   ),
                 ],
               ),
