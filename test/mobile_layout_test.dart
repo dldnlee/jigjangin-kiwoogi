@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -165,6 +166,67 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('desk pixels stay fixed across character frames and moods', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 450);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    List<int>? baseline;
+    for (final mood in OfficeMoment.values) {
+      for (var frame = 0; frame < 4; frame++) {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: RepaintBoundary(
+              key: const ValueKey('fixed-desk'),
+              child: OfficeScene(
+                level: 3,
+                rank: 0,
+                reducedMotion: true,
+                fillSpace: true,
+                previewMoment: mood,
+                previewFrame: frame,
+              ),
+            ),
+          ),
+        );
+        await waitForOfficeArt(tester);
+        await tester.pump();
+        final boundary = tester.renderObject<RenderRepaintBoundary>(
+          find.byKey(const ValueKey('fixed-desk')),
+        );
+        final pixels = await tester.runAsync(() async {
+          final image = await boundary.toImage();
+          final bytes = (await image.toByteData(
+            format: ui.ImageByteFormat.rawRgba,
+          ))!;
+          final result = <int>[];
+          // Monitor and desk leg: independent of hands, papers and coffee effects.
+          for (final region in [
+            const Rect.fromLTWH(240, 292, 14, 40),
+            const Rect.fromLTWH(274, 370, 8, 30),
+          ]) {
+            for (var y = region.top.toInt(); y < region.bottom; y++) {
+              for (var x = region.left.toInt(); x < region.right; x++) {
+                result.add(bytes.getUint32((y * image.width + x) * 4));
+              }
+            }
+          }
+          image.dispose();
+          return result;
+        });
+        baseline ??= pixels;
+        expect(
+          pixels,
+          baseline,
+          reason: '${mood.name} frame $frame moved furniture',
+        );
+      }
+    }
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('six office scenes render with the real sprite atlas', (
     tester,
   ) async {
@@ -200,6 +262,34 @@ void main() {
       await expectLater(
         find.byKey(const ValueKey('scene-capture')),
         matchesGoldenFile('goldens/scene-${moment.name}.png'),
+      );
+    }
+    for (final progress in [.21, .79]) {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(fontFamily: 'NeoDunggeunmo'),
+          home: Scaffold(
+            body: RepaintBoundary(
+              key: const ValueKey('walk-capture'),
+              child: OfficeScene(
+                level: 3,
+                rank: 0,
+                reducedMotion: true,
+                fillSpace: true,
+                previewMoment: OfficeMoment.feedback,
+                previewProgress: progress,
+              ),
+            ),
+          ),
+        ),
+      );
+      await waitForOfficeArt(tester);
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byKey(const ValueKey('walk-capture')),
+        matchesGoldenFile(
+          'goldens/boss-${progress < .5 ? "arrival" : "departure"}.png',
+        ),
       );
     }
     await tester.pumpWidget(const SizedBox());

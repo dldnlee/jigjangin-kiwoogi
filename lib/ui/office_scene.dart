@@ -20,6 +20,7 @@ class OfficeScene extends StatefulWidget {
     this.fillSpace = false,
     this.previewMoment,
     this.previewFrame = 0,
+    this.previewProgress = .5,
   });
   final int level, rank;
   final bool reducedMotion, fillSpace;
@@ -27,6 +28,7 @@ class OfficeScene extends StatefulWidget {
   /// Static art-direction/test preview; gameplay always uses the random director.
   final OfficeMoment? previewMoment;
   final int previewFrame;
+  final double previewProgress;
   @override
   State<OfficeScene> createState() => _OfficeSceneState();
 }
@@ -38,7 +40,7 @@ class _OfficeSceneState extends State<OfficeScene>
   Duration _previous = Duration.zero;
   int _paintMs = 0, _animationMs = 0;
   bool _active = true;
-  ui.Image? _rooms, _sprites, _moments, _workstation;
+  ui.Image? _rooms, _sprites, _boss, _workstation, _worker;
   Object? _error;
   OfficeMoment get moment => widget.previewMoment ?? _director.moment;
   @override
@@ -64,8 +66,9 @@ class _OfficeSceneState extends State<OfficeScene>
       for (final name in [
         'office-rooms',
         'office-sprites',
-        'office-moments',
+        'office-boss',
         'office-workstation',
+        'office-worker-seated',
       ]) {
         loaded.add(await _image('assets/sprites/$name.png'));
       }
@@ -78,8 +81,9 @@ class _OfficeSceneState extends State<OfficeScene>
       setState(() {
         _rooms = loaded[0];
         _sprites = loaded[1];
-        _moments = loaded[2];
+        _boss = loaded[2];
         _workstation = loaded[3];
+        _worker = loaded[4];
       });
     } catch (e) {
       for (final image in loaded) {
@@ -97,7 +101,7 @@ class _OfficeSceneState extends State<OfficeScene>
     _director.advance(delta);
     _animationMs += delta;
     _paintMs += delta;
-    if (_paintMs >= 150) {
+    if (_paintMs >= 33) {
       _paintMs = 0;
       setState(() {});
     }
@@ -143,14 +147,17 @@ class _OfficeSceneState extends State<OfficeScene>
     _ticker.dispose();
     _rooms?.dispose();
     _sprites?.dispose();
-    _moments?.dispose();
+    _boss?.dispose();
     _workstation?.dispose();
+    _worker?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final progress = widget.previewMoment != null ? .5 : _director.progress;
+    final progress = widget.previewMoment != null
+        ? widget.previewProgress
+        : _director.progress;
     final tense =
         moment == OfficeMoment.deadline || moment == OfficeMoment.feedback;
     final accent = tense
@@ -171,8 +178,9 @@ class _OfficeSceneState extends State<OfficeScene>
           children: [
             if (_rooms == null ||
                 _sprites == null ||
-                _moments == null ||
-                _workstation == null)
+                _boss == null ||
+                _workstation == null ||
+                _worker == null)
               ColoredBox(
                 color: const Color(0xffdce3ef),
                 child: Center(
@@ -187,8 +195,9 @@ class _OfficeSceneState extends State<OfficeScene>
                   painter: _OfficePainter(
                     _rooms!,
                     _sprites!,
-                    _moments!,
+                    _boss!,
                     _workstation!,
+                    _worker!,
                     widget.level,
                     widget.rank,
                     widget.previewMoment == null
@@ -262,15 +271,16 @@ class _OfficePainter extends CustomPainter {
   _OfficePainter(
     this.rooms,
     this.sprites,
-    this.moments,
+    this.boss,
     this.workstation,
+    this.worker,
     this.level,
     this.rank,
     this.frame,
     this.moment,
     this.progress,
   );
-  final ui.Image rooms, sprites, moments, workstation;
+  final ui.Image rooms, sprites, boss, workstation, worker;
   final int level, rank, frame;
   final OfficeMoment moment;
   final double progress;
@@ -353,22 +363,6 @@ class _OfficePainter extends CustomPainter {
       draw(sprites, uv, x, bottom, w);
     }
 
-    void actor(
-      int row,
-      double x,
-      double bottom,
-      double w, {
-      double dx = 0,
-      double dy = 0,
-    }) => draw(
-      moments,
-      Rect.fromLTWH(frame * .25, row * .25, .25, .25),
-      x,
-      bottom,
-      w,
-      dx: dx,
-      dy: dy,
-    );
     final shift = ((level - 1) % 5) * .02 + (level - 1) * .0005;
     prop(11, .01, .13, .24);
     prop(10, .77 - shift, .09, .22);
@@ -380,18 +374,32 @@ class _OfficePainter extends CustomPainter {
     }
     final interacting =
         moment == OfficeMoment.feedback || moment == OfficeMoment.meeting;
-    // Walk-in / walk-out translation, then gesture animation beside the desk.
+    // Walk cycles only play while travelling; planted gesture frames take over
+    // at the desk. Departure faces right instead of sliding backwards.
     if (interacting) {
-      final entrance = (progress / .18).clamp(0.0, 1.0);
-      final exit = ((progress - .83) / .17).clamp(0.0, 1.0);
-      final travel = (1 - entrance + exit) * unit * .42;
-      actor(
-        3,
-        .74,
-        .02,
-        .28,
-        dx: travel,
-        dy: travel > 0 ? (frame % 2) * 2.0 : 0,
+      final arriving = progress < .22;
+      final leaving = progress > .78;
+      final distance = arriving
+          ? 1 - progress / .22
+          : leaving
+          ? (progress - .78) / .22
+          : 0.0;
+      final bossRow = arriving
+          ? 0
+          : leaving
+          ? 1
+          : moment == OfficeMoment.feedback
+          ? 2
+          : 3;
+      final bossFrame = arriving || leaving
+          ? (((arriving ? 1 - distance : distance) * 12).floor() % 4)
+          : frame;
+      draw(
+        boss,
+        Rect.fromLTWH(bossFrame * .25, bossRow * .25, .25, .25),
+        .70 + distance * .48,
+        .00,
+        .34,
       );
     }
     // Keep chair, hands, keyboard and desk aligned in every animation frame.
@@ -402,13 +410,34 @@ class _OfficePainter extends CustomPainter {
       OfficeMoment.working || OfficeMoment.coffee => 0,
     };
     draw(
-      workstation,
+      worker,
       Rect.fromLTWH(frame * .25, row * .25, .25, .25),
       .18,
       .02,
       .60,
       aspect: workstation.width / workstation.height,
     );
+    // Sample furniture ONLY from frame zero. Never animate its source or anchor.
+    final deskOrigin = Offset(
+      (left + .18 * unit).roundToDouble(),
+      (floor - .02 * unit - .60 * unit / 1.5).roundToDouble(),
+    );
+    final deskScale = (.60 * unit).roundToDouble() / 384;
+    canvas.save();
+    canvas.translate(deskOrigin.dx, deskOrigin.dy);
+    canvas.scale(deskScale);
+    final furniture = Path()
+      ..addRect(const Rect.fromLTWH(158, 164, 204, 17))
+      ..addRect(const Rect.fromLTWH(265, 42, 100, 212))
+      ..addRect(const Rect.fromLTWH(209, 152, 44, 13));
+    canvas.clipPath(furniture, doAntiAlias: false);
+    canvas.drawImageRect(
+      workstation,
+      const Rect.fromLTWH(0, 0, 384, 256),
+      const Rect.fromLTWH(0, 0, 384, 256),
+      paint,
+    );
+    canvas.restore();
     prop(14, .12 + shift, -.01, .16);
     // Pixel effects are independent overlays, never baked into the room.
     void pixel(double x, double y, double w, double h, Color color) {
@@ -452,6 +481,6 @@ class _OfficePainter extends CustomPainter {
       old.level != level ||
       old.rank != rank ||
       old.rooms != rooms ||
-      old.moments != moments ||
+      old.boss != boss ||
       old.workstation != workstation;
 }
