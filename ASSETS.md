@@ -10,6 +10,8 @@ Generated with the built-in image generation tool; copied into this project. Ori
 - `assets/office-pixel.png`: first concept scene, retained but superseded in the live scene.
 - `assets/fonts/neodgm.ttf`: NeoDunggeunmo 1.601 from https://github.com/neodgm/neodgm. SIL Open Font License in `assets/fonts/OFL.txt`.
 
+- `assets/sprites/office-workstation.png`: 1536 x 1024 RGBA PNG with genuine alpha; four columns and four rows of complete side-view workstations. Each cell is 384 x 256. Rows: typing, deadline stress, celebration, report discussion. The worker sits on a visible chair with feet down, monitor facing them and keyboard under their hands. These replace the separate worker and desk in all scenes; the moments atlas now supplies only the visiting senior.
+
 ## Frame layout
 
 The image generator did not produce perfectly equal cells, so the renderer uses explicit normalized source bounds to avoid cutting off feet or sampling adjacent props. `lib/ui/office_scene.dart` contains these source rectangles.
@@ -21,7 +23,7 @@ The image generator did not produce perfectly equal cells, so the renderer uses 
 | Furniture 8–11 | 0 / .265 / .565 / .77 / 1 | .54–.775 |
 | Decorations 12–15 | four equal quarters | .775–1 |
 
-Animation: four frames per 1.2 seconds. Layer order: room, lighting tint, rear furniture, worker, desk, cat/award. Room milestones: 1, 6, 11, 16; promotion rank can advance the room sooner. Every level changes furnishing positions and the five-step daylight palette. Draw calls use `FilterQuality.none` and integer destination coordinates.
+Animation: four frames per 1.2 seconds. Layer order: room, lighting tint, rear furniture, visiting senior, complete workstation, cat/award. Room milestones: 1, 6, 11, 16; promotion rank can advance the room sooner. Every level changes furnishing positions and the five-step daylight palette. Draw calls use `FilterQuality.none` and integer destination coordinates.
 
 ## Generation prompts
 
