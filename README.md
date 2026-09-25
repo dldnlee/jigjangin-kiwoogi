@@ -32,6 +32,10 @@ Open **업무 업그레이드 → 프로젝트로 성과 쌓기** on the office 
 
 Preparation follows credited game time, including up to eight hours away. Collect a finished project's result once; the outcome and progress survive relaunches and backup export/import. Existing saves are upgraded automatically. A completed project's office button becomes **프로젝트 완료!**.
 
+## Coworkers
+
+Open **커리어 → 동료와 가까워지기** (or from 업무 업그레이드). Chat with 박 선배, 김 대리 and 이 인턴 every five minutes of game time, or buy them coffee. Each remembers your last topic and greets you accordingly. At friendship 30 they help with projects you start afterwards: higher success chance, shorter preparation, or a bigger reward. Collaborative project approaches raise everyone's friendship.
+
 The living roadmap and delivery history are in [FEATURE_CHECKLIST.md](FEATURE_CHECKLIST.md).
 
 ## Pixel artwork

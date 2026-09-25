@@ -129,23 +129,46 @@ ProjectApproach approachById(OfficeProject project, String id) =>
     );
 
 class ProjectRun {
-  const ProjectRun(this.projectId, this.approachId, this.startedAt, this.roll);
+  const ProjectRun(
+    this.projectId,
+    this.approachId,
+    this.startedAt,
+    this.roll, [
+    this.helpers = const [],
+  ]);
   final String projectId, approachId;
   final int startedAt, roll;
+
+  /// Coworkers whose perks were active when the project started.
+  final List<String> helpers;
   OfficeProject get project => projectById(projectId);
   ProjectApproach get approach => approachById(project, approachId);
-  int get finishesAt => startedAt + approach.seconds;
-  bool get succeeded => roll < approach.successChance;
+  int get seconds => projectSeconds(approach, helpers);
+  int get finishesAt => startedAt + seconds;
+  int get successChance => projectChance(approach, helpers);
+  int get reward => projectReward(approach, helpers);
+  bool get succeeded => roll < successChance;
   Map<String, dynamic> toJson() => {
     'projectId': projectId,
     'approachId': approachId,
     'startedAt': startedAt,
     'roll': roll,
+    if (helpers.isNotEmpty) 'helpers': helpers,
   };
   factory ProjectRun.fromJson(Map<String, dynamic> json) => ProjectRun(
     json['projectId'] as String,
     json['approachId'] as String,
     json['startedAt'] as int,
     json['roll'] as int,
+    List<String>.from(json['helpers'] ?? const []),
   );
 }
+
+int projectSeconds(ProjectApproach a, List<String> helpers) =>
+    helpers.contains('kim') ? a.seconds * 85 ~/ 100 : a.seconds;
+int projectChance(ProjectApproach a, List<String> helpers) =>
+    helpers.contains('park') && a.successChance < 10000
+    ? (a.successChance + 1000).clamp(0, 10000)
+    : a.successChance;
+int projectReward(ProjectApproach a, List<String> helpers) =>
+    helpers.contains('lee') ? a.reward * 110 ~/ 100 : a.reward;

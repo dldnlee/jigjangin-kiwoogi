@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:math' as math;
 
+import 'coworkers.dart';
 import 'projects.dart';
+export 'coworkers.dart';
 export 'projects.dart';
 
 typedef Json = Map<String, dynamic>;
@@ -53,6 +55,16 @@ class GameState {
   ProjectRun? activeProject;
   List<String> completedProjects = [];
 
+  /// Coworker id → friendship 0–100, last chat time, and last topic id.
+  Map<String, int> relationships = {}, lastChats = {};
+  Map<String, String> chatMemories = {};
+
+  int friendship(String id) => relationships[id] ?? 0;
+  List<String> get helpers => [
+    for (final c in coworkers)
+      if (friendship(c.id) >= coworkerPerkAt) c.id,
+  ];
+
   bool get unlocked => upgrades.values.any((v) => v > 0);
   int get age => 22 + seconds ~/ 43200;
   int get xpNeeded => 100 * level * level;
@@ -92,6 +104,9 @@ class GameState {
     'sound': sound,
     'activeProject': activeProject?.toJson(),
     'completedProjects': completedProjects,
+    'relationships': relationships,
+    'lastChats': lastChats,
+    'chatMemories': chatMemories,
   };
 
   factory GameState.fromJson(Json j) {
@@ -143,6 +158,9 @@ class GameState {
         ? null
         : ProjectRun.fromJson(Map<String, dynamic>.from(j['activeProject']));
     s.completedProjects = List<String>.from(j['completedProjects'] ?? const []);
+    s.relationships = Map<String, int>.from(j['relationships'] ?? const {});
+    s.lastChats = Map<String, int>.from(j['lastChats'] ?? const {});
+    s.chatMemories = Map<String, String>.from(j['chatMemories'] ?? const {});
     return s;
   }
   GameState copy() =>
@@ -254,6 +272,18 @@ class GameEngine {
     s.journal.insert(0, {'seconds': s.seconds, 'text': message});
     if (s.journal.length > 500) s.journal.removeLast();
   }
+
+  void _befriend(GameState s, String id, int amount) {
+    final before = s.friendship(id);
+    s.relationships[id] = (before + amount).clamp(0, 100);
+    if (before < coworkerPerkAt && s.relationships[id]! >= coworkerPerkAt) {
+      final c = coworkerById(id);
+      _log(s, '${josa(c.name, '와', '과')} 친해졌어요! 프로젝트 도움: ${c.perk}');
+    }
+  }
+
+  int chatReady(GameState s, String id) =>
+      s.lastChats.containsKey(id) ? s.lastChats[id]! + coworkerChatCooldown : 0;
 
   void _event(GameState s) {
     if (s.pending != null) return;
@@ -483,8 +513,13 @@ class GameEngine {
           approach.id,
           s.seconds,
           _draw(s, 'projects', 10000),
+          s.helpers,
         );
         message = '${project.title} · ${approach.name} 시작!';
+        if (s.helpers.isNotEmpty) {
+          message +=
+              ' (${s.helpers.map((id) => coworkerById(id).name).join(', ')} 도움)';
+        }
         _log(s, message);
       case 'claimProject':
         final run = s.activeProject;
@@ -494,14 +529,14 @@ class GameEngine {
         if (s.seconds < run.finishesAt) throw StateError('아직 준비 중이에요.');
         final approach = run.approach;
         if (run.succeeded) {
-          _credit(s, BigInt.from(approach.reward));
+          _credit(s, BigInt.from(run.reward));
           s.performance = (s.performance + approach.performance).clamp(0, 1000);
           s.reputation = (s.reputation + approach.reputation).clamp(0, 1000);
           s.skills[approach.skill] = (s.skills[approach.skill]! + 1).clamp(
             0,
             100,
           );
-          message = '${run.project.title} 성공! 보상 ${approach.reward}원 · 능력 +1';
+          message = '${run.project.title} 성공! 보상 ${run.reward}원 · 능력 +1';
         } else {
           message =
               '${run.project.title} 아쉬운 마무리. 추가 보상은 없지만 다음 프로젝트에 도전할 수 있어요.';
@@ -509,6 +544,40 @@ class GameEngine {
         s.completedProjects.add(run.projectId);
         s.activeProject = null;
         _log(s, message);
+        // Collaborative approaches bring the whole team closer.
+        if (approach.skill == 'talk') {
+          for (final c in coworkers) {
+            _befriend(s, c.id, run.succeeded ? 8 : 4);
+          }
+        }
+        for (final id in run.helpers) {
+          _befriend(s, id, 2);
+        }
+      case 'chat':
+      case 'coffee':
+        final c = coworkerById(key);
+        if (s.seconds < chatReady(s, key)) {
+          throw StateError(
+            '${josa(c.name, '는', '은')} 지금 바빠요. 조금 뒤에 말을 걸어 주세요.',
+          );
+        }
+        if (kind == 'coffee') {
+          pay(BigInt.from(coworkerCoffeeCost));
+          _befriend(s, key, 8);
+          message = '${c.name}에게 커피를 건넸어요. 친밀도 +8';
+          _log(s, '${josa(c.name, '와', '과')} 커피 한 잔');
+        } else {
+          if (choice < 0 || choice >= c.topics.length) {
+            throw StateError('대화 주제를 확인해 주세요.');
+          }
+          final topic = c.topics[choice];
+          final gain = topic.id == c.favorite ? 5 : 3;
+          _befriend(s, key, gain);
+          s.chatMemories[key] = topic.id;
+          message = '${c.name} ${topic.reply} 친밀도 +$gain';
+          _log(s, '${josa(c.name, '와', '과')} ${topic.label}');
+        }
+        s.lastChats[key] = s.seconds;
       case 'dismissOffline':
         s.offline = null;
         message = '다시 만나 반가워요!';
@@ -593,10 +662,27 @@ class GameEngine {
       approachById(project, run.approachId);
       range(run.startedAt, s.seconds);
       range(run.roll, 9999);
+      if (run.helpers.toSet().length != run.helpers.length) {
+        throw const FormatException('프로젝트 동료 오류');
+      }
+      run.helpers.forEach(coworkerById);
       if (s.completedProjects.contains(run.projectId) ||
           (project.requires != null &&
               !s.completedProjects.contains(project.requires))) {
         throw const FormatException('진행 중인 프로젝트 오류');
+      }
+    }
+    for (final entry in s.relationships.entries) {
+      coworkerById(entry.key);
+      range(entry.value, 100);
+    }
+    for (final entry in s.lastChats.entries) {
+      coworkerById(entry.key);
+      range(entry.value, s.seconds);
+    }
+    for (final entry in s.chatMemories.entries) {
+      if (!coworkerById(entry.key).topics.any((t) => t.id == entry.value)) {
+        throw const FormatException('동료 대화 기록 오류');
       }
     }
     for (final stream in ['promotion', 'offers', 'events', 'projects']) {

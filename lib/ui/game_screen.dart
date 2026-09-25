@@ -12,6 +12,7 @@ import 'office_scene.dart';
 part 'screens.dart';
 part 'office_home.dart';
 part 'projects_screen.dart';
+part 'coworkers_screen.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
   const GameScreen({required this.page, super.key});

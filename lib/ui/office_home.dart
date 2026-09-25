@@ -195,6 +195,12 @@ extension _OfficeHome on _GameScreenState {
                 primary: false,
                 onPressed: () => Navigator.pop(context, true),
               ),
+              const SizedBox(height: 10),
+              PixelButton(
+                label: '동료와 가까워지기',
+                primary: false,
+                onPressed: () => Navigator.pop(context, false),
+              ),
               const SizedBox(height: 16),
               for (final upgrade in content.upgrades) _upgrade(upgrade),
             ],
@@ -202,6 +208,8 @@ extension _OfficeHome on _GameScreenState {
         },
       ),
     );
-    if (openProjects == true && mounted) await _projects();
+    if (!mounted) return;
+    if (openProjects == true) await _projects();
+    if (openProjects == false) await _coworkers();
   }
 }

@@ -59,6 +59,8 @@ extension _Screens on _GameScreenState {
         onPressed: _projects,
         primary: false,
       ),
+      const SizedBox(height: 10),
+      PixelButton(label: '동료와 가까워지기', onPressed: _coworkers, primary: false),
       const SizedBox(height: 16),
       PixelPanel(
         child: Column(

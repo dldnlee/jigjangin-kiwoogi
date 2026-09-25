@@ -66,7 +66,7 @@ extension _Projects on _GameScreenState {
             const SizedBox(height: 8),
             Text(run.approach.name, style: const TextStyle(fontSize: 14)),
             const SizedBox(height: 14),
-            PixelMeter(1 - remaining / run.approach.seconds),
+            PixelMeter(1 - remaining / run.seconds),
             const SizedBox(height: 10),
             Text(
               ready
@@ -77,9 +77,10 @@ extension _Projects on _GameScreenState {
             ),
             const SizedBox(height: 10),
             Text(
-              _projectReward(run.approach),
+              _projectReward(run.approach, run.helpers),
               style: const TextStyle(fontSize: 13, height: 1.6),
             ),
+            if (run.helpers.isNotEmpty) _helpersNote(run.helpers),
             const SizedBox(height: 12),
             PixelButton(
               label: ready ? '결과 확인 · 보상 받기' : '준비 중이에요',
@@ -93,10 +94,19 @@ extension _Projects on _GameScreenState {
     );
   }
 
-  String _projectReward(ProjectApproach a) {
+  String _projectReward(ProjectApproach a, List<String> helpers) {
     final skill = {'work': '업무력', 'expertise': '전문성', 'talk': '말빨'}[a.skill];
-    return '${a.successChance == 10000 ? '확정 보상' : '성공 시 보상'} ${won(BigInt.from(a.reward))}\n성과 +${a.performance} · 평판 +${a.reputation} · $skill +1 (최대 100)';
+    final team = a.skill == 'talk' ? '\n함께 준비하면 모든 동료 친밀도 +8 (실패 시 +4)' : '';
+    return '${projectChance(a, helpers) == 10000 ? '확정 보상' : '성공 시 보상'} ${won(BigInt.from(projectReward(a, helpers)))}\n성과 +${a.performance} · 평판 +${a.reputation} · $skill +1 (최대 100)$team';
   }
+
+  Widget _helpersNote(List<String> helpers) => Padding(
+    padding: const EdgeInsets.only(top: 8),
+    child: Text(
+      '동료 도움 · ${helpers.map((id) => '${coworkerById(id).name}(${coworkerById(id).perk})').join(', ')}',
+      style: const TextStyle(fontSize: 12, color: navy, height: 1.6),
+    ),
+  );
 
   Widget _projectCard(GameController c, OfficeProject project) {
     final state = c.state!;
@@ -140,7 +150,8 @@ extension _Projects on _GameScreenState {
                 '${projectById(project.requires!).title} 완료 후 열려요.',
                 style: const TextStyle(fontSize: 13, color: muted),
               ),
-            ] else if (!complete && state.activeProject == null)
+            ] else if (!complete && state.activeProject == null) ...[
+              if (state.helpers.isNotEmpty) _helpersNote(state.helpers),
               for (var i = 0; i < project.approaches.length; i++) ...[
                 const SizedBox(height: 18),
                 Text(
@@ -154,10 +165,10 @@ extension _Projects on _GameScreenState {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '준비 ${durationLabel(project.approaches[i].seconds)} · 성공률 ${project.approaches[i].successChance ~/ 100}%\n${_projectReward(project.approaches[i])}',
+                  '준비 ${durationLabel(projectSeconds(project.approaches[i], state.helpers))} · 성공률 ${projectChance(project.approaches[i], state.helpers) ~/ 100}%\n${_projectReward(project.approaches[i], state.helpers)}',
                   style: const TextStyle(fontSize: 13, height: 1.6),
                 ),
-                if (project.approaches[i].successChance < 10000)
+                if (projectChance(project.approaches[i], state.helpers) < 10000)
                   const Text(
                     '실패하면 준비 비용은 돌아오지 않고 추가 보상도 없어요. 다음 프로젝트는 열려요.',
                     style: TextStyle(fontSize: 12, color: coral, height: 1.6),
@@ -176,6 +187,7 @@ extension _Projects on _GameScreenState {
                       : null,
                 ),
               ],
+            ],
           ],
         ),
       ),
