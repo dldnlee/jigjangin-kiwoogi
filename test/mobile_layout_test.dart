@@ -169,66 +169,72 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('desk pixels stay fixed across character frames and moods', (
-    tester,
-  ) async {
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(390, 450);
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    List<int>? baseline;
-    for (final mood in OfficeMoment.values) {
-      for (var frame = 0; frame < 4; frame++) {
-        await tester.pumpWidget(
-          MaterialApp(
-            home: RepaintBoundary(
-              key: const ValueKey('fixed-desk'),
-              child: OfficeScene(
-                level: 3,
-                rank: 0,
-                reducedMotion: true,
-                fillSpace: true,
-                previewMoment: mood,
-                previewFrame: frame,
+  testWidgets(
+    'custom desk pixels stay fixed across character frames and moods',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(390, 450);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      List<int>? baseline;
+      for (final mood in OfficeMoment.values) {
+        for (var frame = 0; frame < 4; frame++) {
+          await tester.pumpWidget(
+            MaterialApp(
+              home: RepaintBoundary(
+                key: const ValueKey('fixed-desk'),
+                child: OfficeScene(
+                  level: 3,
+                  rank: 0,
+                  reducedMotion: true,
+                  fillSpace: true,
+                  officeStyle: const {
+                    'desk': 'desk-walnut',
+                    'pet': 'pet-silver',
+                    'plant': 'plant-small',
+                  },
+                  previewMoment: mood,
+                  previewFrame: frame,
+                ),
               ),
             ),
-          ),
-        );
-        await waitForOfficeArt(tester);
-        await tester.pump();
-        final boundary = tester.renderObject<RenderRepaintBoundary>(
-          find.byKey(const ValueKey('fixed-desk')),
-        );
-        final pixels = await tester.runAsync(() async {
-          final image = await boundary.toImage();
-          final bytes = (await image.toByteData(
-            format: ui.ImageByteFormat.rawRgba,
-          ))!;
-          final result = <int>[];
-          // Monitor and desk leg: independent of hands, papers and coffee effects.
-          for (final region in [
-            const Rect.fromLTWH(240, 292, 14, 40),
-            const Rect.fromLTWH(274, 370, 8, 30),
-          ]) {
-            for (var y = region.top.toInt(); y < region.bottom; y++) {
-              for (var x = region.left.toInt(); x < region.right; x++) {
-                result.add(bytes.getUint32((y * image.width + x) * 4));
+          );
+          await waitForOfficeArt(tester);
+          await tester.pump();
+          final boundary = tester.renderObject<RenderRepaintBoundary>(
+            find.byKey(const ValueKey('fixed-desk')),
+          );
+          final pixels = await tester.runAsync(() async {
+            final image = await boundary.toImage();
+            final bytes = (await image.toByteData(
+              format: ui.ImageByteFormat.rawRgba,
+            ))!;
+            final result = <int>[];
+            // Monitor and desk leg: independent of hands, papers and coffee effects.
+            for (final region in [
+              const Rect.fromLTWH(240, 292, 14, 40),
+              const Rect.fromLTWH(274, 370, 8, 30),
+            ]) {
+              for (var y = region.top.toInt(); y < region.bottom; y++) {
+                for (var x = region.left.toInt(); x < region.right; x++) {
+                  result.add(bytes.getUint32((y * image.width + x) * 4));
+                }
               }
             }
-          }
-          image.dispose();
-          return result;
-        });
-        baseline ??= pixels;
-        expect(
-          pixels,
-          baseline,
-          reason: '${mood.name} frame $frame moved furniture',
-        );
+            image.dispose();
+            return result;
+          });
+          baseline ??= pixels;
+          expect(
+            pixels,
+            baseline,
+            reason: '${mood.name} frame $frame moved furniture',
+          );
+        }
       }
-    }
-    await tester.pumpWidget(const SizedBox());
-  });
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 
   testWidgets('six office scenes render with the real sprite atlas', (
     tester,
@@ -294,6 +300,53 @@ void main() {
           '$goldenDirectory/boss-${progress < .5 ? "arrival" : "departure"}.png',
         ),
       );
+    }
+    await tester.pumpWidget(const SizedBox());
+  });
+  testWidgets('customized room themes render with stable sprite proportions', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 450);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final font = FontLoader('NeoDunggeunmo')
+      ..addFont(rootBundle.load('assets/fonts/neodgm.ttf'));
+    await font.load();
+    for (final room in ['starter', 'open', 'manager', 'executive']) {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(fontFamily: 'NeoDunggeunmo'),
+          home: Scaffold(
+            body: RepaintBoundary(
+              key: const ValueKey('decorated-scene'),
+              child: OfficeScene(
+                level: 16,
+                rank: 0,
+                reducedMotion: true,
+                fillSpace: true,
+                previewMoment: OfficeMoment.feedback,
+                previewFrame: 2,
+                officeStyle: {
+                  'room': 'room-$room',
+                  'desk': 'desk-walnut',
+                  'plant': 'plant-small',
+                  'pet': 'pet-silver',
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await waitForOfficeArt(tester);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      if (Platform.isMacOS) {
+        await expectLater(
+          find.byKey(const ValueKey('decorated-scene')),
+          matchesGoldenFile('$goldenDirectory/decorated-$room.png'),
+        );
+      }
     }
     await tester.pumpWidget(const SizedBox());
   });

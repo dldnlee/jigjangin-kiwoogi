@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
+import '../domain/office_style.dart';
 import 'office_moments.dart';
 import 'pixel_widgets.dart';
 
@@ -18,10 +19,12 @@ class OfficeScene extends StatefulWidget {
     required this.rank,
     required this.reducedMotion,
     this.fillSpace = false,
+    this.officeStyle = const {},
     this.previewMoment,
     this.previewFrame = 0,
     this.previewProgress = .5,
   });
+  final Map<String, String> officeStyle;
   final int level, rank;
   final bool reducedMotion, fillSpace;
 
@@ -205,6 +208,7 @@ class _OfficeSceneState extends State<OfficeScene>
                         : widget.previewFrame.clamp(0, 3),
                     moment,
                     progress,
+                    widget.officeStyle,
                   ),
                 ),
               ),
@@ -279,14 +283,18 @@ class _OfficePainter extends CustomPainter {
     this.frame,
     this.moment,
     this.progress,
+    this.officeStyle,
   );
   final ui.Image rooms, sprites, boss, workstation, worker;
   final int level, rank, frame;
   final OfficeMoment moment;
   final double progress;
+  final Map<String, String> officeStyle;
   @override
   void paint(Canvas canvas, Size size) {
-    final tier = roomForLevel(level, rank);
+    final tier =
+        decorationById(officeChoice(officeStyle, 'room')).room ??
+        roomForLevel(level, rank);
     final paint = Paint()
       ..filterQuality = FilterQuality.none
       ..isAntiAlias = false;
@@ -365,7 +373,10 @@ class _OfficePainter extends CustomPainter {
 
     final shift = ((level - 1) % 5) * .02 + (level - 1) * .0005;
     prop(11, .01, .13, .24);
-    prop(10, .77 - shift, .09, .22);
+    final plant = officeChoice(officeStyle, 'plant');
+    if (plant != 'plant-none') {
+      prop(10, .77 - shift, .09, plant == 'plant-small' ? .16 : .22);
+    }
     if (level >= 2) {
       prop(13, .02 + shift, .03, .18);
     }
@@ -437,8 +448,53 @@ class _OfficePainter extends CustomPainter {
       const Rect.fromLTWH(0, 0, 384, 256),
       paint,
     );
+    if (officeChoice(officeStyle, 'desk') == 'desk-walnut') {
+      // Tint only the tabletop using its original pixels. The monitor, chair,
+      // hands, geometry and furniture anchor are unchanged.
+      canvas.save();
+      canvas.clipRect(const Rect.fromLTWH(158, 164, 204, 17));
+      canvas.drawImageRect(
+        workstation,
+        const Rect.fromLTWH(0, 0, 384, 256),
+        const Rect.fromLTWH(0, 0, 384, 256),
+        Paint()
+          ..filterQuality = FilterQuality.none
+          ..isAntiAlias = false
+          ..colorFilter = const ColorFilter.mode(
+            Color(0xffab8d75),
+            BlendMode.modulate,
+          ),
+      );
+      canvas.restore();
+    }
     canvas.restore();
-    prop(14, .12 + shift, -.01, .16);
+    final pet = officeChoice(officeStyle, 'pet');
+    if (pet == 'pet-silver') {
+      paint.colorFilter = const ColorFilter.matrix([
+        .2126,
+        .7152,
+        .0722,
+        0,
+        0,
+        .2126,
+        .7152,
+        .0722,
+        0,
+        0,
+        .2126,
+        .7152,
+        .0722,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+      ]);
+    }
+    if (pet != 'pet-none') prop(14, .12 + shift, -.01, .16);
+    paint.colorFilter = null;
     // Pixel effects are independent overlays, never baked into the room.
     void pixel(double x, double y, double w, double h, Color color) {
       canvas.drawRect(
@@ -475,6 +531,7 @@ class _OfficePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _OfficePainter old) =>
+      old.officeStyle != officeStyle ||
       old.frame != frame ||
       old.moment != moment ||
       old.progress != progress ||

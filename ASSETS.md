@@ -49,3 +49,9 @@ Production pixel-art spritesheet, exact 1024x1024 transparent PNG with genuine a
 - Boss arrival occupies the first 22% of a visit, gestures the middle 56%, departure the last 22%. Direction-specific walking frames track distance; stationary gestures keep their feet planted. Rendering updates every 33 ms for smooth travel. Reduced motion still freezes the entire scene.
 
 Both new sheets were created with built-in image generation. Prompts: seated worker only matching the original proportions and anchor, four frames each of typing/stress/celebration/report, no desk/monitor/keyboard/plant, genuine alpha; boss in navy suit and ID lanyard, four leftward walking frames with contact/passing poses and opposing arm swing, four rightward walking frames, four stern pointing/report gestures and four calm explaining gestures, fixed scale/feet baseline, no furniture or background.
+
+## Customization rendering
+
+F03 reuses the existing atlases without changing the image files. Room choices select one of the existing four 768 × 512 cells, with automatic progression still the default. The walnut finish multiplies only the fixed tabletop source rectangle by a warm dark tint; monitor, keyboard, chair, and character anchors remain unchanged. The small plant scales the same source at the same bottom anchor. The silver cat uses a luminance color matrix preserving alpha and geometry. Hiding the plant or cat omits only that layer. The color filter is cleared before drawing scene effects.
+
+Default selections render identically to old saves. Four separately reviewed `decorated-*.png` macOS references exercise room overrides, walnut finish, small plant, gray cat, and the visiting boss. The fixed-furniture test now checks customized scenes through every frame and mood.

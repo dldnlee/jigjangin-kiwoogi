@@ -23,3 +23,9 @@ Visual inspection found an existing progress-meter bug: its fill had zero height
 ## Repeatable validation
 
 Run `python3 tools/verify.py` from the repository root. It runs analysis and all Dart test files, excludes AppleDouble sidecars from discovery, and cleans only generated native-asset metadata. Review golden differences before using `--update-goldens`; an update alone is not verification. Preserve the original references for their original host environment.
+
+## F03 customization review
+
+Reviewed the original props atlas (plant and cat), fixed-workstation source crop, and all four decorated-room reference images. The first reference-generation attempt lacked a Material text-style ancestor, producing placeholder glyphs; corrected the test harness to use a Scaffold and reviewed the newly rendered Korean text before accepting references. Existing golden images were not replaced.
+
+The custom desk maintains the same tabletop, monitor, and leg geometry across moods. The gray cat preserves its silhouette and alpha; the smaller plant keeps its floor anchor. Room changes use a cover crop, preserving the background aspect ratio. Live simulator checks covered the explicit apply flow, a saved walnut selection, and animated preview. Widget tests at 320/390 cover locked previews, discarding an unapplied choice when changing categories, applying, SQLite reload, and rendering the saved selection on the office screen. Domain tests cover old saves, rank/level unlocks, malformed backups, reversible choices, replay, and absence of gameplay bonuses.

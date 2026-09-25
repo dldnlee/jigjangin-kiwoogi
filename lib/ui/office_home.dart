@@ -108,6 +108,7 @@ extension _OfficeHome on _GameScreenState {
                 Expanded(
                   child: OfficeScene(
                     key: const ValueKey('office-scene'),
+                    officeStyle: s.officeStyle,
                     level: s.level,
                     rank: s.rank,
                     reducedMotion: s.reducedMotion,
@@ -162,7 +163,7 @@ extension _OfficeHome on _GameScreenState {
   );
 
   Future<void> _upgrades() async {
-    final openProjects = await _sheet<bool>(
+    final destination = await _sheet<String>(
       Consumer(
         builder: (context, ref, _) {
           ref.watch(gameProvider);
@@ -193,13 +194,19 @@ extension _OfficeHome on _GameScreenState {
                     ? '프로젝트로 성과 쌓기'
                     : '진행 중인 프로젝트 보기',
                 primary: false,
-                onPressed: () => Navigator.pop(context, true),
+                onPressed: () => Navigator.pop(context, 'projects'),
               ),
               const SizedBox(height: 10),
               PixelButton(
                 label: '동료와 가까워지기',
                 primary: false,
-                onPressed: () => Navigator.pop(context, false),
+                onPressed: () => Navigator.pop(context, 'coworkers'),
+              ),
+              const SizedBox(height: 16),
+              PixelButton(
+                label: '사무실 꾸미기',
+                primary: false,
+                onPressed: () => Navigator.pop(context, 'decorate'),
               ),
               const SizedBox(height: 16),
               for (final upgrade in content.upgrades) _upgrade(upgrade),
@@ -209,7 +216,8 @@ extension _OfficeHome on _GameScreenState {
       ),
     );
     if (!mounted) return;
-    if (openProjects == true) await _projects();
-    if (openProjects == false) await _coworkers();
+    if (destination == 'projects') await _projects();
+    if (destination == 'coworkers') await _coworkers();
+    if (destination == 'decorate') await _decorate();
   }
 }

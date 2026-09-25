@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:math' as math;
 
+import 'office_style.dart';
+export 'office_style.dart';
 import 'coworkers.dart';
 import 'projects.dart';
 export 'coworkers.dart';
@@ -51,6 +53,8 @@ class GameState {
   Map<String, int> cooldowns = {};
   List<String> receipts = [];
   bool reducedMotion = false, sound = false;
+
+  Map<String, String> officeStyle = {};
 
   ProjectRun? activeProject;
   List<String> completedProjects = [];
@@ -107,6 +111,7 @@ class GameState {
     'relationships': relationships,
     'lastChats': lastChats,
     'chatMemories': chatMemories,
+    'officeStyle': officeStyle,
   };
 
   factory GameState.fromJson(Json j) {
@@ -161,6 +166,7 @@ class GameState {
     s.relationships = Map<String, int>.from(j['relationships'] ?? const {});
     s.lastChats = Map<String, int>.from(j['lastChats'] ?? const {});
     s.chatMemories = Map<String, String>.from(j['chatMemories'] ?? const {});
+    s.officeStyle = Map<String, String>.from(j['officeStyle'] ?? const {});
     return s;
   }
   GameState copy() =>
@@ -578,6 +584,13 @@ class GameEngine {
           _log(s, '${josa(c.name, '와', '과')} ${topic.label}');
         }
         s.lastChats[key] = s.seconds;
+      case 'decorate':
+        final decoration = decorationById(key);
+        if (!decoration.unlocked(s.level, s.rank)) {
+          throw StateError(decoration.requirement);
+        }
+        s.officeStyle[decoration.slot] = decoration.id;
+        message = '${decoration.name} 적용 완료!';
       case 'dismissOffline':
         s.offline = null;
         message = '다시 만나 반가워요!';
@@ -621,6 +634,13 @@ class GameEngine {
         s.earned < BigInt.zero ||
         s.earned > maxMoney) {
       throw const FormatException('올바르지 않은 저장 파일');
+    }
+    for (final entry in s.officeStyle.entries) {
+      final decoration = decorationById(entry.value);
+      if (decoration.slot != entry.key ||
+          !decoration.unlocked(s.level, s.rank)) {
+        throw const FormatException('사무실 꾸미기 저장 오류');
+      }
     }
     content.company(s.companyId);
     for (final id in ['speed', 'efficiency', 'focus']) {

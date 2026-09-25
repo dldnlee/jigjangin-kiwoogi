@@ -313,6 +313,8 @@ extension _Screens on _GameScreenState {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       _title('MY INVENTORY', '일잘러의 준비물.', '구매 후 바로 장착! 슬롯마다 하나씩.'),
+      PixelButton(label: '사무실 꾸미기', primary: false, onPressed: _decorate),
+      const SizedBox(height: 16),
       PixelPanel(
         color: const Color(0xffe4eaf4),
         child: Column(

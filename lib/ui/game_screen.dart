@@ -11,6 +11,7 @@ import 'pixel_widgets.dart';
 import 'office_scene.dart';
 part 'screens.dart';
 part 'office_home.dart';
+part 'decoration_screen.dart';
 part 'projects_screen.dart';
 part 'coworkers_screen.dart';
 

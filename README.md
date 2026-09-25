@@ -38,6 +38,12 @@ Open **커리어 → 동료와 가까워지기** (or from 업무 업그레이드
 
 The living roadmap and delivery history are in [FEATURE_CHECKLIST.md](FEATURE_CHECKLIST.md).
 
+## Office customization
+
+Open **장비 → 사무실 꾸미기**, or find it under **업무 업그레이드**. Preview 13 room, desk, plant, and cat choices; milestones unlock them for free. Locked choices can be previewed but cannot be applied. Only **적용하기** saves a selection; closing the sheet or changing categories discards an unapplied preview. Select **성장에 맞춰 자동** to resume automatic room progression. Cosmetic choices do not change salary or promotion requirements.
+
+The preview can animate and respects reduced-motion settings. Saved choices survive relaunches and backup import/export; older saves keep the original appearance.
+
 ## Pixel artwork
 
 The interface uses office navy, cool gray and fluorescent white, with yellow reward accents and coral stress/feedback captions. This gives the pixel-art workplace a sharper office-comedy tone.
