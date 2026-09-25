@@ -54,6 +54,12 @@ extension _Screens on _GameScreenState {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       _title('CAREER QUEST', '한 계단씩, 더 멀리.', '실력을 쌓고 다음 명함을 준비해요.'),
+      PixelButton(
+        label: s.activeProject == null ? '프로젝트로 성과 쌓기' : '진행 중인 프로젝트 보기',
+        onPressed: _projects,
+        primary: false,
+      ),
+      const SizedBox(height: 16),
       PixelPanel(
         child: Column(
           children: [

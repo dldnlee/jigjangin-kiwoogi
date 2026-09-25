@@ -26,6 +26,14 @@ flutter build apk --debug
 
 For iOS, open the project on macOS with Xcode and run `flutter run` against an iPhone or simulator. Configure your development signing team. Native binaries are not included: this Windows environment has no Android SDK, and iOS requires macOS/Xcode. Store signing and release packaging remain to be configured.
 
+## Projects with tradeoffs
+
+Open **업무 업그레이드 → 프로젝트로 성과 쌓기** on the office screen, or open the project board from **커리어**. Complete the Friday presentation, monthly report, and team proposal in order. Seven approaches offer different costs, preparation times, skill growth, reputation, and success chances. The board shows the terms before you pay. Risky failures give no extra reward but still unlock the next assignment. Projects are one-time assignments; only one can run at once.
+
+Preparation follows credited game time, including up to eight hours away. Collect a finished project's result once; the outcome and progress survive relaunches and backup export/import. Existing saves are upgraded automatically. A completed project's office button becomes **프로젝트 완료!**.
+
+The living roadmap and delivery history are in [FEATURE_CHECKLIST.md](FEATURE_CHECKLIST.md).
+
 ## Pixel artwork
 
 The interface uses office navy, cool gray and fluorescent white, with yellow reward accents and coral stress/feedback captions. This gives the pixel-art workplace a sharper office-comedy tone.
@@ -54,6 +62,10 @@ Included content: five ranks, three employers, three upgrades, three skills, 15 
 .\flutter-local.ps1 analyze
 .\flutter-local.ps1 test
 ```
+
+On macOS (verified with Flutter 3.47.0 / Dart 3.13.0), run `python3 tools/verify.py`. This runs analysis and the full test suite while excluding macOS `._*` metadata from test discovery on external volumes. Do not run multiple Flutter test commands simultaneously against the same build directory. The minimum Dart version is 3.13.0.
+
+Visual references in `test/goldens/macos/` are specific to the verified macOS renderer; the original references are retained in `test/goldens/`. See [visual review](docs/VISUAL_REVIEW.md) before changing them.
 
 The tests cover simulation segmentation, clock rollback, the offline cap, purchase replay, save integrity, SQLite recovery/concurrency, all five mobile screens at 320/390 logical pixels, and progression screenshots. Goldens are in `test/goldens/`.
 

@@ -26,6 +26,9 @@ Future<void> waitForOfficeArt(WidgetTester tester) async {
   expect(find.text('사무실 이미지를 불러오지 못했어요.'), findsNothing);
 }
 
+// Native font rasterization and image sampling vary by host renderer.
+final goldenDirectory = Platform.isMacOS ? 'goldens/macos' : 'goldens';
+
 void main() {
   testWidgets('new sprite atlas has real alpha and preserves opaque clothing', (
     tester,
@@ -152,7 +155,7 @@ void main() {
     await tester.pumpAndSettle();
     await expectLater(
       find.byKey(const ValueKey('capture')),
-      matchesGoldenFile('goldens/mobile-office.png'),
+      matchesGoldenFile('$goldenDirectory/mobile-office.png'),
     );
     for (final level in [6, 11, 16]) {
       c.state = c.state!.copy()..level = level;
@@ -160,7 +163,7 @@ void main() {
       await tester.pumpAndSettle();
       await expectLater(
         find.byKey(const ValueKey('capture')),
-        matchesGoldenFile('goldens/office-level-$level.png'),
+        matchesGoldenFile('$goldenDirectory/office-level-$level.png'),
       );
     }
     await tester.pumpWidget(const SizedBox());
@@ -261,7 +264,7 @@ void main() {
       expect(tester.takeException(), isNull);
       await expectLater(
         find.byKey(const ValueKey('scene-capture')),
-        matchesGoldenFile('goldens/scene-${moment.name}.png'),
+        matchesGoldenFile('$goldenDirectory/scene-${moment.name}.png'),
       );
     }
     for (final progress in [.21, .79]) {
@@ -288,7 +291,7 @@ void main() {
       await expectLater(
         find.byKey(const ValueKey('walk-capture')),
         matchesGoldenFile(
-          'goldens/boss-${progress < .5 ? "arrival" : "departure"}.png',
+          '$goldenDirectory/boss-${progress < .5 ? "arrival" : "departure"}.png',
         ),
       );
     }

@@ -123,9 +123,17 @@ extension _OfficeHome on _GameScreenState {
           children: [
             Expanded(
               child: PixelButton(
-                label: '업무 업그레이드',
+                label:
+                    s.activeProject != null &&
+                        s.seconds >= s.activeProject!.finishesAt
+                    ? '프로젝트 완료!'
+                    : '업무 업그레이드',
                 compact: true,
-                onPressed: _upgrades,
+                onPressed:
+                    s.activeProject != null &&
+                        s.seconds >= s.activeProject!.finishesAt
+                    ? _projects
+                    : _upgrades,
               ),
             ),
             const SizedBox(width: 8),
@@ -154,7 +162,7 @@ extension _OfficeHome on _GameScreenState {
   );
 
   Future<void> _upgrades() async {
-    await _sheet<void>(
+    final openProjects = await _sheet<bool>(
       Consumer(
         builder: (context, ref, _) {
           ref.watch(gameProvider);
@@ -180,11 +188,20 @@ extension _OfficeHome on _GameScreenState {
                 style: const TextStyle(fontSize: 13, color: navy),
               ),
               const SizedBox(height: 16),
+              PixelButton(
+                label: s.activeProject == null
+                    ? '프로젝트로 성과 쌓기'
+                    : '진행 중인 프로젝트 보기',
+                primary: false,
+                onPressed: () => Navigator.pop(context, true),
+              ),
+              const SizedBox(height: 16),
               for (final upgrade in content.upgrades) _upgrade(upgrade),
             ],
           );
         },
       ),
     );
+    if (openProjects == true && mounted) await _projects();
   }
 }

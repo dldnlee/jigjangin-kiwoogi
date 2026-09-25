@@ -98,6 +98,7 @@ class PixelMeter extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: FractionallySizedBox(
         widthFactor: value.clamp(0, 1),
+        heightFactor: 1,
         child: const ColoredBox(color: navy),
       ),
     ),

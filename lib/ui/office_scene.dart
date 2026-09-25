@@ -415,7 +415,7 @@ class _OfficePainter extends CustomPainter {
       .18,
       .02,
       .60,
-      aspect: workstation.width / workstation.height,
+      aspect: worker.width / worker.height,
     );
     // Sample furniture ONLY from frame zero. Never animate its source or anchor.
     final deskOrigin = Offset(

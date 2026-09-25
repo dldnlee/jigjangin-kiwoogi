@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'dart:math' as math;
 
+import 'projects.dart';
+export 'projects.dart';
+
 typedef Json = Map<String, dynamic>;
 
 class GameContent {
@@ -26,6 +29,7 @@ class GameState {
       'promotion': seed,
       'offers': nextRandom(seed),
       'events': nextRandom(nextRandom(seed)),
+      'projects': nextRandom(nextRandom(nextRandom(seed))),
     };
   }
   int lastMs, seed;
@@ -45,6 +49,9 @@ class GameState {
   Map<String, int> cooldowns = {};
   List<String> receipts = [];
   bool reducedMotion = false, sound = false;
+
+  ProjectRun? activeProject;
+  List<String> completedProjects = [];
 
   bool get unlocked => upgrades.values.any((v) => v > 0);
   int get age => 22 + seconds ~/ 43200;
@@ -83,6 +90,8 @@ class GameState {
     'receipts': receipts,
     'reducedMotion': reducedMotion,
     'sound': sound,
+    'activeProject': activeProject?.toJson(),
+    'completedProjects': completedProjects,
   };
 
   factory GameState.fromJson(Json j) {
@@ -126,6 +135,14 @@ class GameState {
     s.receipts = List<String>.from(j['receipts']);
     s.reducedMotion = j['reducedMotion'];
     s.sound = j['sound'];
+    s.random.putIfAbsent(
+      'projects',
+      () => nextRandom(nextRandom(nextRandom(s.seed))),
+    );
+    s.activeProject = j['activeProject'] == null
+        ? null
+        : ProjectRun.fromJson(Map<String, dynamic>.from(j['activeProject']));
+    s.completedProjects = List<String>.from(j['completedProjects'] ?? const []);
     return s;
   }
   GameState copy() =>
@@ -446,6 +463,52 @@ class GameEngine {
         message = c['text'];
         _log(s, '${e['title']} · $message');
         s.pending = null;
+      case 'startProject':
+        if (s.activeProject != null) throw StateError('진행 중인 프로젝트를 먼저 마쳐 주세요.');
+        final project = projectById(key);
+        if (s.completedProjects.contains(key)) {
+          throw StateError('이미 완료한 프로젝트예요.');
+        }
+        if (project.requires != null &&
+            !s.completedProjects.contains(project.requires)) {
+          throw StateError('앞선 프로젝트를 먼저 완료해 주세요.');
+        }
+        if (choice < 0 || choice >= project.approaches.length) {
+          throw StateError('준비 방식을 확인해 주세요.');
+        }
+        final approach = project.approaches[choice];
+        pay(BigInt.from(approach.cost));
+        s.activeProject = ProjectRun(
+          key,
+          approach.id,
+          s.seconds,
+          _draw(s, 'projects', 10000),
+        );
+        message = '${project.title} · ${approach.name} 시작!';
+        _log(s, message);
+      case 'claimProject':
+        final run = s.activeProject;
+        if (run == null || run.projectId != key) {
+          throw StateError('이미 끝난 프로젝트예요.');
+        }
+        if (s.seconds < run.finishesAt) throw StateError('아직 준비 중이에요.');
+        final approach = run.approach;
+        if (run.succeeded) {
+          _credit(s, BigInt.from(approach.reward));
+          s.performance = (s.performance + approach.performance).clamp(0, 1000);
+          s.reputation = (s.reputation + approach.reputation).clamp(0, 1000);
+          s.skills[approach.skill] = (s.skills[approach.skill]! + 1).clamp(
+            0,
+            100,
+          );
+          message = '${run.project.title} 성공! 보상 ${approach.reward}원 · 능력 +1';
+        } else {
+          message =
+              '${run.project.title} 아쉬운 마무리. 추가 보상은 없지만 다음 프로젝트에 도전할 수 있어요.';
+        }
+        s.completedProjects.add(run.projectId);
+        s.activeProject = null;
+        _log(s, message);
       case 'dismissOffline':
         s.offline = null;
         message = '다시 만나 반가워요!';
@@ -513,7 +576,30 @@ class GameEngine {
         throw const FormatException('장비 저장 오류');
       }
     }
-    for (final stream in ['promotion', 'offers', 'events']) {
+    if (s.completedProjects.length > officeProjects.length ||
+        s.completedProjects.toSet().length != s.completedProjects.length) {
+      throw const FormatException('프로젝트 기록 오류');
+    }
+    for (final id in s.completedProjects) {
+      final project = projectById(id);
+      if (project.requires != null &&
+          !s.completedProjects.contains(project.requires)) {
+        throw const FormatException('프로젝트 순서 오류');
+      }
+    }
+    final run = s.activeProject;
+    if (run != null) {
+      final project = run.project;
+      approachById(project, run.approachId);
+      range(run.startedAt, s.seconds);
+      range(run.roll, 9999);
+      if (s.completedProjects.contains(run.projectId) ||
+          (project.requires != null &&
+              !s.completedProjects.contains(project.requires))) {
+        throw const FormatException('진행 중인 프로젝트 오류');
+      }
+    }
+    for (final stream in ['promotion', 'offers', 'events', 'projects']) {
       range(s.random[stream]!, 4294967295);
       if (s.random[stream] == 0) throw const FormatException('난수 저장 오류');
     }

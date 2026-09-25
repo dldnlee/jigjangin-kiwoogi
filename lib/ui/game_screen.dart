@@ -11,6 +11,7 @@ import 'pixel_widgets.dart';
 import 'office_scene.dart';
 part 'screens.dart';
 part 'office_home.dart';
+part 'projects_screen.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
   const GameScreen({required this.page, super.key});
@@ -80,6 +81,17 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 child: PixelIcon('office', size: 24, color: paper),
               ),
               actions: [
+                if (widget.page != 'office')
+                  IconButton(
+                    tooltip: '프로젝트',
+                    onPressed: _projects,
+                    icon: Badge(
+                      isLabelVisible:
+                          s.activeProject != null &&
+                          s.seconds >= s.activeProject!.finishesAt,
+                      child: const PixelIcon('journal', size: 22, color: paper),
+                    ),
+                  ),
                 IconButton(
                   tooltip: '설정',
                   onPressed: _settings,
