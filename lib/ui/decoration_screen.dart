@@ -31,7 +31,7 @@ extension _Decoration on _GameScreenState {
                   ],
                 ),
                 const Text(
-                  '성장하면 무료로 열려요. 미리보기는 저장되지 않고, 적용할 때만 내 사무실이 바뀌어요.',
+                  '머리색·상의·피부색은 처음부터 자유롭게! 공간 꾸미기는 성장하면 열려요. 적용할 때만 저장돼요.',
                   style: TextStyle(fontSize: 13, color: muted, height: 1.6),
                 ),
                 const SizedBox(height: 14),

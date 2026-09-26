@@ -23,8 +23,8 @@ Future<void> main() async {
     const SystemUiOverlayStyle(
       statusBarColor: Color(0xff293e63),
       statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xfff5f7fb),
-      systemNavigationBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Color(0xff111e34),
+      systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
   runApp(const ProviderScope(child: OfficeWorkerApp()));
@@ -43,7 +43,7 @@ class OfficeWorkerApp extends StatelessWidget {
     theme: ThemeData(
       useMaterial3: true,
       fontFamily: 'NeoDunggeunmo',
-      scaffoldBackgroundColor: const Color(0xffedf0f5),
+      scaffoldBackgroundColor: const Color(0xff111e34),
       colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xff293e63))
           .copyWith(
             primary: const Color(0xff293e63),
@@ -57,6 +57,15 @@ class OfficeWorkerApp extends StatelessWidget {
           fontSize: 16,
           height: 1.4,
           color: Color(0xff202c40),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xfffafbff),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xff8592a6)),
         ),
       ),
       snackBarTheme: const SnackBarThemeData(

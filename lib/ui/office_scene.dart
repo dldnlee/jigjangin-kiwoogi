@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import '../domain/office_style.dart';
 import 'office_moments.dart';
 import 'pixel_widgets.dart';
+import 'character_palette.dart';
 
 int roomForLevel(int level, int rank) =>
     math.max(rank, (level - 1) ~/ 5).clamp(0, 3);
@@ -44,6 +45,7 @@ class _OfficeSceneState extends State<OfficeScene>
   int _paintMs = 0, _animationMs = 0;
   bool _active = true;
   ui.Image? _rooms, _sprites, _boss, _workstation, _worker;
+  ui.FragmentShader? _characterShader;
   Object? _error;
   OfficeMoment get moment => widget.previewMoment ?? _director.moment;
   @override
@@ -71,10 +73,13 @@ class _OfficeSceneState extends State<OfficeScene>
         'office-sprites',
         'office-boss',
         'office-workstation',
-        'office-worker-seated',
+        'office-worker-pixel-v2',
       ]) {
         loaded.add(await _image('assets/sprites/$name.png'));
       }
+      final program = await ui.FragmentProgram.fromAsset(
+        'assets/shaders/character.frag',
+      );
       if (!mounted) {
         for (final image in loaded) {
           image.dispose();
@@ -87,6 +92,7 @@ class _OfficeSceneState extends State<OfficeScene>
         _boss = loaded[2];
         _workstation = loaded[3];
         _worker = loaded[4];
+        _characterShader = program.fragmentShader();
       });
     } catch (e) {
       for (final image in loaded) {
@@ -152,6 +158,7 @@ class _OfficeSceneState extends State<OfficeScene>
     _sprites?.dispose();
     _boss?.dispose();
     _workstation?.dispose();
+    _characterShader?.dispose();
     _worker?.dispose();
     super.dispose();
   }
@@ -209,6 +216,7 @@ class _OfficeSceneState extends State<OfficeScene>
                     moment,
                     progress,
                     widget.officeStyle,
+                    _characterShader!,
                   ),
                 ),
               ),
@@ -284,12 +292,14 @@ class _OfficePainter extends CustomPainter {
     this.moment,
     this.progress,
     this.officeStyle,
+    this.characterShader,
   );
   final ui.Image rooms, sprites, boss, workstation, worker;
   final int level, rank, frame;
   final OfficeMoment moment;
   final double progress;
   final Map<String, String> officeStyle;
+  final ui.FragmentShader characterShader;
   @override
   void paint(Canvas canvas, Size size) {
     final tier =
@@ -420,13 +430,34 @@ class _OfficePainter extends CustomPainter {
       OfficeMoment.feedback || OfficeMoment.meeting => 3,
       OfficeMoment.working || OfficeMoment.coffee => 0,
     };
-    draw(
-      worker,
-      Rect.fromLTWH(frame * .25, row * .25, .25, .25),
-      .18,
-      .02,
-      .60,
-      aspect: worker.width / worker.height,
+    final characterRect = Rect.fromLTWH(
+      (left + .18 * unit).roundToDouble(),
+      (floor - .02 * unit - .60 * unit / 1.5).roundToDouble(),
+      (.60 * unit).roundToDouble(),
+      (.40 * unit).roundToDouble(),
+    );
+    final colors = [
+      for (final slot in ['hair', 'shirt', 'skin'])
+        characterColor(officeStyle, slot),
+    ];
+    final uniforms = <double>[
+      characterRect.left,
+      characterRect.top,
+      characterRect.width,
+      characterRect.height,
+      frame.toDouble(),
+      row.toDouble(),
+      for (final color in colors) ...[color.r, color.g, color.b],
+    ];
+    for (var i = 0; i < uniforms.length; i++) {
+      characterShader.setFloat(i, uniforms[i]);
+    }
+    characterShader.setImageSampler(0, worker);
+    canvas.drawRect(
+      characterRect,
+      Paint()
+        ..shader = characterShader
+        ..isAntiAlias = false,
     );
     // Sample furniture ONLY from frame zero. Never animate its source or anchor.
     final deskOrigin = Offset(

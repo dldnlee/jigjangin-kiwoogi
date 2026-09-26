@@ -10,6 +10,7 @@ extension _OfficeHome on _GameScreenState {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
             color: const Color(0xfffafbff),
             border: Border.all(color: border, width: 2),
           ),
@@ -62,14 +63,14 @@ extension _OfficeHome on _GameScreenState {
             children: [
               Text(
                 'LV.${s.level}',
-                style: const TextStyle(fontSize: 12, color: navy),
+                style: const TextStyle(fontSize: 12, color: onBackdrop),
               ),
               const SizedBox(width: 8),
               Expanded(child: PixelMeter(s.xp / s.xpNeeded)),
               const SizedBox(width: 8),
               Text(
                 '${s.xp}/${s.xpNeeded}',
-                style: const TextStyle(fontSize: 10, color: muted),
+                style: const TextStyle(fontSize: 10, color: onBackdrop),
               ),
             ],
           ),
@@ -77,7 +78,9 @@ extension _OfficeHome on _GameScreenState {
         Expanded(
           child: Container(
             key: const ValueKey('fixed-office-stage'),
+            clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
               color: paper,
               border: Border.all(color: border, width: 2),
             ),
@@ -156,7 +159,7 @@ extension _OfficeHome on _GameScreenState {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 10, color: muted),
+          style: const TextStyle(fontSize: 10, color: onBackdrop),
         ),
       ],
     ),
@@ -209,6 +212,11 @@ extension _OfficeHome on _GameScreenState {
                 onPressed: () => Navigator.pop(context, 'decorate'),
               ),
               const SizedBox(height: 16),
+              const Text(
+                '버튼을 길게 누르면 연속으로 업그레이드해요.',
+                style: TextStyle(fontSize: 12, color: muted),
+              ),
+              const SizedBox(height: 10),
               for (final upgrade in content.upgrades) _upgrade(upgrade),
             ],
           );

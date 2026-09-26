@@ -4,6 +4,7 @@ const ink = Color(0xff202c40),
     navy = Color(0xff293e63),
     paper = Color(0xfffafbff),
     gold = Color(0xffffd35a);
+const backdrop = Color(0xff111e34), onBackdrop = Color(0xffbccbe2);
 const muted = Color(0xff626f83), border = Color(0xff8592a6);
 const coral = Color(0xffc64b47);
 
@@ -23,9 +24,10 @@ class PixelPanel extends StatelessWidget {
     padding: padding,
     decoration: BoxDecoration(
       color: color,
+      borderRadius: BorderRadius.circular(18),
       border: Border.all(color: border, width: 2),
       boxShadow: const [
-        BoxShadow(color: Color(0xffc0c9d8), offset: Offset(3, 4)),
+        BoxShadow(color: Color(0x24000000), offset: Offset(3, 4)),
       ],
     ),
     child: child,
@@ -55,9 +57,14 @@ class PixelButton extends StatelessWidget {
             : primary
             ? navy
             : const Color(0xffffdf78),
-        shape: Border.all(color: onPressed == null ? border : ink, width: 2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(color: onPressed == null ? border : ink, width: 2),
+        ),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onPressed,
+          borderRadius: BorderRadius.circular(14),
           child: Padding(
             padding: EdgeInsets.symmetric(
               horizontal: compact ? 9 : 14,
@@ -92,6 +99,7 @@ class PixelMeter extends StatelessWidget {
     padding: const EdgeInsets.all(2),
     decoration: BoxDecoration(
       color: const Color(0xffe1e7f1),
+      borderRadius: BorderRadius.circular(5),
       border: Border.all(color: border),
     ),
     child: Align(

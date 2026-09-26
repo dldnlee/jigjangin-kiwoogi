@@ -29,6 +29,20 @@ void main() {
     expect(migrated.officeStyle, isEmpty);
     expect(officeChoice(migrated.officeStyle, 'room'), 'room-auto');
     expect(migrated.friendship('park'), 40);
+    expect(officeChoice(migrated.officeStyle, 'hair'), 'hair-black');
+    expect(officeChoice(migrated.officeStyle, 'shirt'), 'shirt-white');
+    expect(officeChoice(migrated.officeStyle, 'skin'), 'skin-warm');
+  });
+  test('every appearance option is free from level one', () {
+    var s = GameState(lastMs: 1000);
+    for (final option in officeDecorations.where(
+      (d) => ['hair', 'shirt', 'skin'].contains(d.slot),
+    )) {
+      s = apply(s, option.id);
+      expect(s.officeStyle[option.slot], option.id);
+      engine.validate(s);
+    }
+    expect(s.cash, GameState(lastMs: 1000).cash);
   });
   test('milestones gate equipping, promotions unlock rooms early', () {
     final fresh = GameState(lastMs: 1000);
@@ -91,23 +105,35 @@ void main() {
       );
     }
   });
-  test('SQLite reload and backup preserve all four selections', () async {
-    final repo = SaveRepository(SaveDatabase(NativeDatabase.memory()), engine);
-    try {
-      var s = GameState(lastMs: 1000)..level = 16;
-      for (final id in [
-        'room-starter',
-        'desk-walnut',
-        'plant-small',
-        'pet-silver',
-      ]) {
-        s = apply(s, id);
+  test(
+    'SQLite reload and backup preserve room and character selections',
+    () async {
+      final repo = SaveRepository(
+        SaveDatabase(NativeDatabase.memory()),
+        engine,
+      );
+      try {
+        var s = GameState(lastMs: 1000)..level = 16;
+        for (final id in [
+          'room-starter',
+          'desk-walnut',
+          'plant-small',
+          'pet-silver',
+          'hair-silver',
+          'shirt-coral',
+          'skin-deep',
+        ]) {
+          s = apply(s, id);
+        }
+        final saved = await repo.commit(s, 0);
+        expect((await repo.load()).state!.officeStyle, s.officeStyle);
+        expect(
+          decodeSave(encodeSave(saved), engine).officeStyle,
+          s.officeStyle,
+        );
+      } finally {
+        await repo.database.close();
       }
-      final saved = await repo.commit(s, 0);
-      expect((await repo.load()).state!.officeStyle, s.officeStyle);
-      expect(decodeSave(encodeSave(saved), engine).officeStyle, s.officeStyle);
-    } finally {
-      await repo.database.close();
-    }
-  });
+    },
+  );
 }

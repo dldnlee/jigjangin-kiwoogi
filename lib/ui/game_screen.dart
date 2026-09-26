@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../application/game_controller.dart';
 import '../domain/game.dart';
 import 'pixel_widgets.dart';
+import 'repeat_upgrade_button.dart';
 import 'office_scene.dart';
 part 'screens.dart';
 part 'office_home.dart';
@@ -54,6 +55,35 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     }
   }
 
+  Future<bool> _buyLevel(String kind, String key) async {
+    final c = controller;
+    if (!mounted || c.background || c.error != null) return false;
+    if (c.busy) return true;
+    final level = kind == 'upgrade' ? s.upgrades[key]! : s.skills[key]!;
+    final cost = kind == 'upgrade'
+        ? upgradeCost(
+            content.upgrades.firstWhere((u) => u['id'] == key)['base'],
+            level,
+          )
+        : upgradeCost(1000, level, 118);
+    if (level >= (kind == 'upgrade' ? 200 : 100) ||
+        s.cash < cost ||
+        (kind == 'train' && !s.unlocked)) {
+      return false;
+    }
+    final message = await c.act(kind, key: key);
+    final nextLevel = kind == 'upgrade'
+        ? c.state?.upgrades[key]
+        : c.state?.skills[key];
+    final succeeded = nextLevel == level + 1 && c.error == null;
+    if (mounted && !succeeded && message != null) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
+    }
+    return succeeded;
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = ref.watch(gameProvider);
@@ -66,7 +96,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     }
     if (s.offline == null) _awayShown = false;
     return ColoredBox(
-      color: const Color(0xffcbd2df),
+      color: backdrop,
       child: Center(
         child: SizedBox(
           width: 480,
@@ -162,31 +192,37 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const PixelIcon('office', size: 56, color: navy),
-              const SizedBox(height: 24),
-              Text(
-                c.error == null ? '출근 준비 중...' : '저장을 확인해 주세요',
-                style: const TextStyle(fontSize: 24),
-              ),
-              const SizedBox(height: 16),
-              Text(c.error ?? '작은 책상에서 시작하는 큰 내일', textAlign: TextAlign.center),
-              if (c.error != null) ...[
-                const SizedBox(height: 20),
-                PixelButton(label: '다시 시도', onPressed: () => c.boot()),
-                TextButton(
-                  onPressed: () async {
-                    await Clipboard.setData(
-                      ClipboardData(text: await c.export()),
-                    );
-                  },
-                  child: const Text('원본 백업 복사'),
+          child: DefaultTextStyle.merge(
+            style: const TextStyle(color: paper),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const PixelIcon('office', size: 56, color: onBackdrop),
+                const SizedBox(height: 24),
+                Text(
+                  c.error == null ? '출근 준비 중...' : '저장을 확인해 주세요',
+                  style: const TextStyle(fontSize: 24),
                 ),
-                TextButton(onPressed: _reset, child: const Text('진행 초기화')),
+                const SizedBox(height: 16),
+                Text(
+                  c.error ?? '작은 책상에서 시작하는 큰 내일',
+                  textAlign: TextAlign.center,
+                ),
+                if (c.error != null) ...[
+                  const SizedBox(height: 20),
+                  PixelButton(label: '다시 시도', onPressed: () => c.boot()),
+                  TextButton(
+                    onPressed: () async {
+                      await Clipboard.setData(
+                        ClipboardData(text: await c.export()),
+                      );
+                    },
+                    child: const Text('원본 백업 복사'),
+                  ),
+                  TextButton(onPressed: _reset, child: const Text('진행 초기화')),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -194,7 +230,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   );
   Widget _navigation() => Container(
     decoration: const BoxDecoration(
-      color: Color(0xfff5f7fb),
+      color: backdrop,
       border: Border(top: BorderSide(color: border, width: 2)),
     ),
     child: SafeArea(
@@ -218,23 +254,24 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                   child: Container(
                     constraints: const BoxConstraints(minHeight: 70),
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    color: widget.page == pair.$1
-                        ? const Color(0xffdce6f7)
-                        : null,
+                    decoration: BoxDecoration(
+                      color: widget.page == pair.$1 ? navy : null,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         PixelIcon(
                           pair.$1,
                           size: 24,
-                          color: widget.page == pair.$1 ? navy : muted,
+                          color: widget.page == pair.$1 ? gold : onBackdrop,
                         ),
                         const SizedBox(height: 7),
                         Text(
                           pair.$2,
                           style: TextStyle(
                             fontSize: 12,
-                            color: widget.page == pair.$1 ? navy : muted,
+                            color: widget.page == pair.$1 ? gold : onBackdrop,
                           ),
                         ),
                       ],
@@ -256,19 +293,19 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           small,
           style: const TextStyle(
             fontSize: 11,
-            color: muted,
+            color: onBackdrop,
             letterSpacing: 1.5,
           ),
         ),
         const SizedBox(height: 8),
         Text(
           title,
-          style: const TextStyle(fontSize: 25, color: ink, height: 1.4),
+          style: const TextStyle(fontSize: 25, color: paper, height: 1.4),
         ),
         const SizedBox(height: 7),
         Text(
           subtitle,
-          style: const TextStyle(fontSize: 14, color: muted, height: 1.6),
+          style: const TextStyle(fontSize: 14, color: onBackdrop, height: 1.6),
         ),
       ],
     ),
@@ -278,7 +315,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     isScrollControlled: true,
     useSafeArea: true,
     backgroundColor: paper,
-    shape: const Border(top: BorderSide(color: ink, width: 3)),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      side: BorderSide(color: border, width: 2),
+    ),
+    clipBehavior: Clip.antiAlias,
     constraints: const BoxConstraints(maxWidth: 480),
     builder: (sheetContext) => SafeArea(
       child: SingleChildScrollView(

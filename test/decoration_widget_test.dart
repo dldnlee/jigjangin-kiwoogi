@@ -89,6 +89,31 @@ void main() {
       expect(c.state!.officeStyle, {'desk': 'desk-walnut'});
       expect((await repo.load()).state!.officeStyle, {'desk': 'desk-walnut'});
       expect(tester.widget<PixelButton>(apply).onPressed, isNull);
+      for (final choice in [
+        ['머리색', '실버 그레이', 'hair', 'hair-silver'],
+        ['상의', '따뜻한 코랄', 'shirt', 'shirt-coral'],
+        ['피부색', '깊은 피부색', 'skin', 'skin-deep'],
+      ]) {
+        await tester.ensureVisible(find.text(choice[0]));
+        await tester.tap(find.text(choice[0]));
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(find.text(choice[1]));
+        await tester.tap(find.text(choice[1]));
+        await tester.pumpAndSettle();
+        expect(c.state!.officeStyle[choice[2]], isNull);
+        expect(
+          tester
+              .widget<OfficeScene>(
+                find.byKey(const ValueKey('decoration-preview')),
+              )
+              .officeStyle[choice[2]],
+          choice[3],
+        );
+        await tester.ensureVisible(apply);
+        await tester.tap(apply);
+        await tester.pumpAndSettle();
+        expect((await repo.load()).state!.officeStyle[choice[2]], choice[3]);
+      }
       await tester.ensureVisible(find.byTooltip('닫기'));
       await tester.tap(find.byTooltip('닫기'));
       await tester.pumpAndSettle();

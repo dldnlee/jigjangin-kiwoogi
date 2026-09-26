@@ -36,12 +36,13 @@ extension _Screens on _GameScreenState {
             const SizedBox(width: 5),
             SizedBox(
               width: 90,
-              child: PixelButton(
+              child: RepeatUpgradeButton(
+                key: ValueKey('upgrade-$key'),
                 label: level >= 200 ? 'MAX' : won(cost),
                 compact: true,
-                onPressed: !controller.busy && level < 200 && s.cash >= cost
-                    ? () => act('upgrade', key: key)
-                    : null,
+                enabled:
+                    controller.error == null && level < 200 && s.cash >= cost,
+                buy: () => _buyLevel('upgrade', key),
               ),
             ),
           ],
@@ -75,6 +76,7 @@ extension _Screens on _GameScreenState {
                       height: 30,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
                         color: i <= s.rank ? navy : const Color(0xffe1e5ed),
                         border: Border.all(color: border),
                       ),
@@ -244,7 +246,7 @@ extension _Screens on _GameScreenState {
   Widget _skills() => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      _title('SKILL UP!', '나에게 투자하는 시간.', '배운 능력은 이직해도 남아요.'),
+      _title('SKILL UP!', '나에게 투자하는 시간.', '배운 능력은 이직해도 남아요. 길게 눌러 연속 훈련!'),
       if (!s.unlocked) ...[
         const PixelPanel(color: gold, child: Text('업무에서 첫 업그레이드를 구매해 주세요.')),
         const SizedBox(height: 18),
@@ -291,17 +293,17 @@ extension _Screens on _GameScreenState {
                   style: const TextStyle(fontSize: 13, color: navy),
                 ),
                 const SizedBox(height: 16),
-                PixelButton(
+                RepeatUpgradeButton(
+                  key: ValueKey('train-${k['id']}'),
                   label: s.skills[k['id']]! >= 100
                       ? '최대 레벨'
                       : '훈련하기 · ${won(upgradeCost(1000, s.skills[k['id']]!, 118))}',
-                  onPressed:
-                      !controller.busy &&
-                          s.unlocked &&
-                          s.skills[k['id']]! < 100 &&
-                          s.cash >= upgradeCost(1000, s.skills[k['id']]!, 118)
-                      ? () => act('train', key: k['id'])
-                      : null,
+                  enabled:
+                      controller.error == null &&
+                      s.unlocked &&
+                      s.skills[k['id']]! < 100 &&
+                      s.cash >= upgradeCost(1000, s.skills[k['id']]!, 118),
+                  buy: () => _buyLevel('train', k['id']),
                 ),
               ],
             ),
@@ -342,6 +344,7 @@ extension _Screens on _GameScreenState {
                         width: 58,
                         height: 62,
                         decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
                           color: s.equipped.containsKey(slot.key)
                               ? gold
                               : paper,
@@ -376,7 +379,6 @@ extension _Screens on _GameScreenState {
         initialValue: _gearFilter,
         decoration: const InputDecoration(
           labelText: '장비 종류',
-          border: OutlineInputBorder(borderRadius: BorderRadius.zero),
         ),
         items: [
           const DropdownMenuItem(value: 'all', child: Text('전체 장비')),
@@ -523,7 +525,7 @@ extension _Screens on _GameScreenState {
       const Text(
         'FIRST CHAPTER · v0.2\n커리어, 능력, 장비와 20개의 이야기',
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 12, color: muted, height: 1.8),
+        style: TextStyle(fontSize: 12, color: onBackdrop, height: 1.8),
       ),
     ],
   );

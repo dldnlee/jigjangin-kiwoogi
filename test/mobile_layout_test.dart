@@ -30,11 +30,11 @@ Future<void> waitForOfficeArt(WidgetTester tester) async {
 final goldenDirectory = Platform.isMacOS ? 'goldens/macos' : 'goldens';
 
 void main() {
-  testWidgets('new sprite atlas has real alpha and preserves opaque clothing', (
+  testWidgets('pixel worker atlas has real alpha and preserves solid paper', (
     tester,
   ) async {
     await tester.runAsync(() async {
-      final bytes = await rootBundle.load('assets/sprites/office-moments.png');
+      final bytes = await rootBundle.load('assets/sprites/office-worker-pixel-v2.png');
       final codec = await ui.instantiateImageCodec(bytes.buffer.asUint8List());
       final image = (await codec.getNextFrame()).image;
       final data = (await image.toByteData(
@@ -45,7 +45,7 @@ void main() {
         if (data.getUint8(i + 3) == 0) {
           clear++;
         }
-        if (data.getUint8(i + 3) == 255 &&
+        if (data.getUint8(i + 3) >= 240 &&
             data.getUint8(i) > 210 &&
             data.getUint8(i + 1) > 210 &&
             data.getUint8(i + 2) > 200) {
@@ -235,6 +235,101 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
   );
+
+  testWidgets('appearance channels change only character pixels', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 450);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final font = FontLoader('NeoDunggeunmo')
+      ..addFont(rootBundle.load('assets/fonts/neodgm.ttf'));
+    await font.load();
+    Future<List<int>> capture(Map<String, String> style) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(fontFamily: 'NeoDunggeunmo'),
+          home: Scaffold(
+            body: RepaintBoundary(
+              key: const ValueKey('palette-capture'),
+              child: OfficeScene(
+                level: 1,
+                rank: 0,
+                reducedMotion: true,
+                fillSpace: true,
+                previewMoment: OfficeMoment.working,
+                officeStyle: style,
+              ),
+            ),
+          ),
+        ),
+      );
+      await waitForOfficeArt(tester);
+      await tester.pump();
+      final boundary = tester.renderObject<RenderRepaintBoundary>(
+        find.byKey(const ValueKey('palette-capture')),
+      );
+      return (await tester.runAsync(() async {
+        final image = await boundary.toImage();
+        final bytes = (await image.toByteData(
+          format: ui.ImageByteFormat.rawRgba,
+        ))!;
+        final pixels = [
+          for (var i = 0; i < bytes.lengthInBytes; i += 4) bytes.getUint32(i),
+        ];
+        image.dispose();
+        return pixels;
+      }))!;
+    }
+
+    final original = await capture({});
+    final changedSets = <Set<int>>[];
+    for (final selection in [
+      {'hair': 'hair-silver'},
+      {'shirt': 'shirt-coral'},
+      {'skin': 'skin-deep'},
+    ]) {
+      final changed = await capture(selection);
+      final indices = <int>{};
+      for (var i = 0; i < original.length; i++) {
+        if (original[i] != changed[i]) {
+          indices.add(i);
+          final x = i % 390, y = i ~/ 390;
+          expect(
+            x >= 70 && x < 304 && y >= 252 && y < 408,
+            isTrue,
+            reason: 'Palette changed background/furniture at $x,$y',
+          );
+        }
+      }
+      expect(
+        indices.length,
+        greaterThan(50),
+        reason: '$selection had no visible effect',
+      );
+      for (final prior in changedSets) {
+        expect(
+          indices.intersection(prior),
+          isEmpty,
+          reason: 'Appearance channels must remain independent',
+        );
+      }
+      changedSets.add(indices);
+    }
+    await capture({
+      'hair': 'hair-silver',
+      'shirt': 'shirt-coral',
+      'skin': 'skin-deep',
+    });
+    if (Platform.isMacOS) {
+      await expectLater(
+        find.byKey(const ValueKey('palette-capture')),
+        matchesGoldenFile('$goldenDirectory/character-customized.png'),
+      );
+    }
+    await tester.pumpWidget(const SizedBox());
+  });
 
   testWidgets('six office scenes render with the real sprite atlas', (
     tester,

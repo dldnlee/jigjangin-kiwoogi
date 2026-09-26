@@ -25,14 +25,31 @@ const decorationSlots = {
   'desk': '책상',
   'plant': '화분',
   'pet': '고양이',
+  'hair': '머리색',
+  'shirt': '상의',
+  'skin': '피부색',
 };
 const defaultOfficeStyle = {
   'room': 'room-auto',
   'desk': 'desk-oak',
   'plant': 'plant-leafy',
   'pet': 'pet-orange',
+  'hair': 'hair-black',
+  'shirt': 'shirt-white',
+  'skin': 'skin-warm',
 };
 const officeDecorations = [
+  OfficeDecoration('hair-black', 'hair', '차콜 블랙', '익숙한 짙은 머리색.'),
+  OfficeDecoration('hair-brown', 'hair', '따뜻한 브라운', '부드러운 갈색 머리.'),
+  OfficeDecoration('hair-silver', 'hair', '실버 그레이', '밝은 회색 머리.'),
+  OfficeDecoration('hair-purple', 'hair', '포근한 퍼플', '개성 있는 보라색 머리.'),
+  OfficeDecoration('shirt-white', 'shirt', '깔끔한 화이트', '기본 흰 셔츠와 짙은 넥타이.'),
+  OfficeDecoration('shirt-blue', 'shirt', '산뜻한 블루', '차분한 파란 셔츠.'),
+  OfficeDecoration('shirt-coral', 'shirt', '따뜻한 코랄', '살구빛이 도는 코랄 셔츠.'),
+  OfficeDecoration('shirt-sage', 'shirt', '차분한 세이지', '은은한 초록 셔츠.'),
+  OfficeDecoration('skin-warm', 'skin', '따뜻한 피부색', '얼굴과 손에 함께 적용돼요.'),
+  OfficeDecoration('skin-light', 'skin', '밝은 피부색', '얼굴과 손에 함께 적용돼요.'),
+  OfficeDecoration('skin-deep', 'skin', '깊은 피부색', '얼굴과 손에 함께 적용돼요.'),
   OfficeDecoration('room-auto', 'room', '성장에 맞춰 자동', '레벨과 승진에 따라 사무실이 바뀌어요.'),
   OfficeDecoration(
     'room-starter',
