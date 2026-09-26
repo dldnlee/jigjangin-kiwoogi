@@ -143,13 +143,16 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 children: [
                   if (c.error != null)
                     MaterialBanner(
+                      key: const ValueKey('save-error'),
                       content: Text(
                         c.error!,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontSize: 13),
                       ),
                       actions: [
                         TextButton(
-                          onPressed: () => c.save(),
+                          onPressed: c.busy ? null : () => c.save(),
                           child: const Text('다시 저장'),
                         ),
                       ],
@@ -207,6 +210,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 Text(
                   c.error ?? '작은 책상에서 시작하는 큰 내일',
                   textAlign: TextAlign.center,
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 if (c.error != null) ...[
                   const SizedBox(height: 20),

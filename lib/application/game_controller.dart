@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -173,10 +174,25 @@ class GameController extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  String _message(Object e) => e.toString().replaceFirst(
-    RegExp(r'^(Bad state: |FormatException: )'),
-    '',
-  );
+  /// Only short Korean messages written by the game reach the player.
+  /// Storage exceptions can embed the full save payload, so they are logged
+  /// in debug builds and replaced with a fixed explanation.
+  String _message(Object e) {
+    final text = switch (e) {
+      StateError(:final message) => message,
+      FormatException(:final message) => message,
+      _ => '',
+    };
+    if (text.length <= 120 && RegExp('[가-힣]').hasMatch(text)) return text;
+    if (kDebugMode) {
+      final detail = '$e';
+      debugPrint(
+        'GameController: ${detail.length > 300 ? '${detail.substring(0, 300)}… (${detail.length} chars)' : detail}',
+      );
+    }
+    return '기기 저장소에 접근하지 못했어요. 잠시 후 다시 시도해 주세요.';
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
